@@ -324,9 +324,24 @@
   }
 }
 
-/* Large desktop */
-@media (min-width: 1400px) {
-  :root {
-    --container: 1200px;
+/* Large screens (laptop/desktop): let the content fill the viewport instead of
+   being capped in a narrow centred column. Scoped to >=1024px so mobile and
+   tablet layouts stay exactly as they are. */
+@media (min-width: 1024px) {
+  .container {
+    max-width: 100%;
+    padding-inline: clamp(32px, 4vw, 80px);
+  }
+
+  /* Hero: equal two-column split that stretches to the full width */
+  .hero {
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+  }
+
+  /* About: same full-width two-column treatment */
+  .about-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
   }
 }
