@@ -1,26 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowUp } from 'lucide-react';
+import { subscribeScroll } from '../lib/scrollTracker';
 
 export function BackToTop() {
   const [show, setShow] = useState(false);
+  const shown = useRef(false);
 
-  useEffect(() => {
-    let frame = 0;
-    const measure = () => {
-      frame = 0;
-      setShow(window.scrollY > 600);
-    };
-    const onScroll = () => {
-      if (!frame) frame = requestAnimationFrame(measure);
-    };
-    measure();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      if (frame) cancelAnimationFrame(frame);
-    };
-  }, []);
+  useEffect(
+    () =>
+      subscribeScroll((y) => {
+        const next = y > 600;
+        if (next === shown.current) return;
+        shown.current = next;
+        setShow(next);
+      }),
+    []
+  );
 
   return (
     <AnimatePresence>

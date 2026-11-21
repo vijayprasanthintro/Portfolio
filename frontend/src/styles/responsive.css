@@ -270,6 +270,68 @@
   }
 }
 
+/* ---------- Mobile performance ----------
+   Keep the premium look, but stop decorative layers from repainting or
+   compositing on every frame. Everything here is scoped to <=768px so the
+   desktop/laptop experience (animations, shadows, spacing) is unchanged. */
+@media (max-width: 768px) {
+  :root {
+    --shadow-md: 0 6px 16px rgba(2, 5, 12, 0.38);
+    --shadow-lg: 0 10px 26px rgba(2, 5, 12, 0.45);
+    --shadow-glow: 0 0 0 1px rgba(59, 130, 246, 0.14), 0 8px 22px rgba(59, 130, 246, 0.14);
+    --shadow-glow-cyan: 0 0 0 1px rgba(56, 189, 248, 0.12), 0 8px 22px rgba(56, 189, 248, 0.12);
+  }
+
+  :root[data-theme='light'] {
+    --shadow-md: 0 6px 16px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 10px 26px rgba(15, 23, 42, 0.1);
+    --shadow-glow: 0 0 0 1px rgba(37, 99, 235, 0.16), 0 8px 22px rgba(37, 99, 235, 0.1);
+    --shadow-glow-cyan: 0 0 0 1px rgba(8, 145, 178, 0.14), 0 8px 22px rgba(8, 145, 178, 0.1);
+  }
+
+  /* Ambient layers stay visible but stop drifting/sweeping. */
+  .hero-grid-persp,
+  .hero-radial-light,
+  .backdrop-blob {
+    animation: none !important;
+  }
+
+  /* Full-viewport noise/sweep layers and 12 ambient lights are pure decoration. */
+  .hero-lights,
+  .backdrop-scanline,
+  .backdrop-noise,
+  .terminal-scanline {
+    display: none !important;
+  }
+
+  .backdrop-blob.b1,
+  .backdrop-blob.b2,
+  .backdrop-blob.b3 {
+    opacity: 0.55;
+  }
+
+  /* Terminal keeps its window, content and typing — only looping effects stop. */
+  .hero-terminal-wrap,
+  .terminal,
+  .terminal-status-dot {
+    animation: none !important;
+  }
+
+  /* Icon micro-loops are not readable at 48px on a phone. */
+  .skill-card[data-cat] .skill-icon svg,
+  .skill-card::after {
+    animation: none !important;
+  }
+
+  .tech-marquee-track {
+    animation-duration: 55s;
+  }
+
+  .hero-avatar {
+    box-shadow: 0 6px 18px rgba(59, 130, 246, 0.22), 0 0 0 5px rgba(59, 130, 246, 0.06);
+  }
+}
+
 /* Tablet */
 @media (min-width: 769px) and (max-width: 1024px) {
   .hero {

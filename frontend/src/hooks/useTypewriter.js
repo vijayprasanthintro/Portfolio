@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 //   { type: 'pause', ms: 700 }
 //
 // `cycle` is bumped by the caller to restart the sequence (looping terminals).
-export function useTypewriter({ script, startDelay = 0, reduced = false, cycle = 0, active = true }) {
+export function useTypewriter({ script, startDelay = 0, reduced = false, cycle = 0, active = true, chunk = 1 }) {
   const [done, setDone] = useState([]);
   const [activeStep, setActiveStep] = useState(null);
   const [finished, setFinished] = useState(false);
@@ -60,10 +60,15 @@ export function useTypewriter({ script, startDelay = 0, reduced = false, cycle =
 
         if (step.type === 'cmd') {
           setActiveStep({ text: '', target: step.text, color: step.color });
-          for (let i = 1; i <= step.text.length; i++) {
-            await wait(step.speed || 60);
+          // Mobile reveals a few characters per render but waits proportionally
+          // longer, so typing looks the same while React re-renders less often.
+          const stepChunk = Math.max(1, chunk);
+          for (let i = stepChunk; i <= step.text.length + stepChunk - 1; i += stepChunk) {
+            await wait((step.speed || 60) * stepChunk);
             if (cancelled) return;
-            setActiveStep({ text: step.text.slice(0, i), target: step.text, color: step.color });
+            const count = Math.min(i, step.text.length);
+            setActiveStep({ text: step.text.slice(0, count), target: step.text, color: step.color });
+            if (count >= step.text.length) break;
           }
           completed.push({ type: 'cmd', text: step.text, color: step.color });
           setDone([...completed]);
@@ -92,7 +97,7 @@ export function useTypewriter({ script, startDelay = 0, reduced = false, cycle =
       // suspended on a timer that will never fire.
       pending.forEach((done) => done());
     };
-  }, [script, startDelay, reduced, cycle, active]);
+  }, [script, startDelay, reduced, cycle, active, chunk]);
 
   return { done, active: activeStep, finished };
 }

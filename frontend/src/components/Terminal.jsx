@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
+import { useMobileDevice } from '../hooks/useMobileDevice';
 import { useTypewriter } from '../hooks/useTypewriter';
 import { TiltCard } from './TiltCard';
 
@@ -48,6 +49,7 @@ export function Terminal({
   compact = false,
 }) {
   const reduced = usePrefersReducedMotion();
+  const mobile = useMobileDevice();
   const bodyRef = useRef(null);
   const [visible, setVisible] = useState(true);
   const steps = useMemo(() => normalizeScript(script, typingDelay, outputDelay) ?? buildScript(), [
@@ -62,6 +64,7 @@ export function Terminal({
     reduced,
     cycle,
     active: visible,
+    chunk: mobile ? 3 : 1,
   });
 
   // Only type/restart while the terminal is actually on screen. Off-screen
@@ -79,10 +82,12 @@ export function Terminal({
 
   // Only the default hero terminal loops; custom scripts run once.
   useEffect(() => {
-    if (!finished || reduced || script || !visible) return;
+    // Loop the hero typing on desktop only; on mobile it types once and stays,
+    // so no timers or React state updates keep running while the user scrolls.
+    if (mobile || !finished || reduced || script || !visible) return;
     const t = setTimeout(() => setCycle((c) => c + 1), 4200);
     return () => clearTimeout(t);
-  }, [finished, reduced, script, visible]);
+  }, [mobile, finished, reduced, script, visible]);
 
   const idle = visible && !active && (finished || done.length === 0);
 

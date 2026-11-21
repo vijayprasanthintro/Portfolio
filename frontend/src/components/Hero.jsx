@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Atom, Leaf, Server, Braces, ArrowRight, ArrowDown, Download } from 'lucide-react';
 import { profile as defaultProfile, socials as defaultSocials } from '../config';
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
+import { useMobileDevice } from '../hooks/useMobileDevice';
 import { useContent } from '../content/ContentContext';
 import { Magnetic } from './Magnetic';
 import { Terminal } from './Terminal';
@@ -44,6 +45,7 @@ function isTouchDevice() {
 
 export function Hero() {
   const reduced = usePrefersReducedMotion();
+  const mobile = useMobileDevice();
   const heroRef = useRef(null);
   const lightsRef = useRef(null);
   const raf = useRef(0);
@@ -93,24 +95,26 @@ export function Hero() {
       <div className="hero-bg" aria-hidden="true">
         <div className="hero-grid-persp" />
         <div className="hero-radial-light" />
-        <div ref={lightsRef} className="hero-lights">
-          {lights.map((l, i) => (
-            <span
-              key={i}
-              className="hero-light"
-              style={{
-                left: l.left,
-                top: l.top,
-                width: l.size,
-                height: l.size,
-                animationDuration: l.duration,
-                animationDelay: l.delay,
-                opacity: l.opacity,
-                '--depth': l.depth,
-              }}
-            />
-          ))}
-        </div>
+        {!mobile && (
+          <div ref={lightsRef} className="hero-lights">
+            {lights.map((l, i) => (
+              <span
+                key={i}
+                className="hero-light"
+                style={{
+                  left: l.left,
+                  top: l.top,
+                  width: l.size,
+                  height: l.size,
+                  animationDuration: l.duration,
+                  animationDelay: l.delay,
+                  opacity: l.opacity,
+                  '--depth': l.depth,
+                }}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="container hero" ref={heroRef}>
@@ -132,6 +136,7 @@ export function Hero() {
                   width={148}
                   height={148}
                   loading="eager"
+                  fetchPriority="high"
                   decoding="async"
                   onError={(e) => {
                     const wrap = e.currentTarget.closest('.hero-avatar-wrap');
@@ -221,44 +226,49 @@ export function Hero() {
           transition={{ duration: 0.9, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
           aria-hidden="true"
         >
-          <div className="hero-code-particles">
-            {particles.map((p, i) => (
-              <span
-                key={i}
-                style={{
-                  left: p.left,
-                  bottom: p.bottom,
-                  animationDelay: p.delay,
-                  animationDuration: p.duration,
-                }}
-              >
-                {p.char}
-              </span>
-            ))}
-          </div>
+          {!mobile && (
+            <div className="hero-code-particles">
+              {particles.map((p, i) => (
+                <span
+                  key={i}
+                  style={{
+                    left: p.left,
+                    bottom: p.bottom,
+                    animationDelay: p.delay,
+                    animationDuration: p.duration,
+                  }}
+                >
+                  {p.char}
+                </span>
+              ))}
+            </div>
+          )}
 
-          <div className="hero-orbit">
-            <span className="ring r1" style={reduced ? undefined : { animation: 'spin-slow 60s linear infinite' }} />
-            <span className="ring r2" style={reduced ? undefined : { animation: 'spin-slow 90s linear infinite reverse' }} />
-            <span className="ring r3" />
-          </div>
+          {!mobile && (
+            <div className="hero-orbit">
+              <span className="ring r1" style={reduced ? undefined : { animation: 'spin-slow 60s linear infinite' }} />
+              <span className="ring r2" style={reduced ? undefined : { animation: 'spin-slow 90s linear infinite reverse' }} />
+              <span className="ring r3" />
+            </div>
+          )}
 
           <div className="hero-terminal-wrap">
             <Terminal />
           </div>
 
-          {floats.map(({ className, icon: Icon, label }) => (
-            <div
-              key={label}
-              className={`hero-float ${className}`}
-              role="img"
-              aria-label={label}
-              title={label}
-              style={reduced ? { animation: 'none' } : undefined}
-            >
-              <Icon aria-hidden="true" />
-            </div>
-          ))}
+          {!mobile &&
+            floats.map(({ className, icon: Icon, label }) => (
+              <div
+                key={label}
+                className={`hero-float ${className}`}
+                role="img"
+                aria-label={label}
+                title={label}
+                style={reduced ? { animation: 'none' } : undefined}
+              >
+                <Icon aria-hidden="true" />
+              </div>
+            ))}
         </motion.div>
       </div>
     </section>
