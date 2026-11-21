@@ -12,16 +12,25 @@ function validateContact({ name, email, message }) {
   return errors;
 }
 
+let transporterPromise;
+
+function getTransporter() {
+  if (!transporterPromise) {
+    transporterPromise = import('nodemailer').then(({ default: nodemailer }) =>
+      nodemailer.createTransport({
+        host: env.smtp.host,
+        port: env.smtp.port,
+        secure: env.smtp.port === 465,
+        auth: { user: env.smtp.user, pass: env.smtp.pass },
+      })
+    );
+  }
+  return transporterPromise;
+}
+
 async function sendEmail({ name, email, message }) {
   if (!isSmtpConfigured()) return false;
-  const { default: nodemailer } = await import('nodemailer');
-
-  const transporter = nodemailer.createTransport({
-    host: env.smtp.host,
-    port: env.smtp.port,
-    secure: env.smtp.port === 465,
-    auth: { user: env.smtp.user, pass: env.smtp.pass },
-  });
+  const transporter = await getTransporter();
 
   await transporter.sendMail({
     from: `"Portfolio Contact" <${env.smtp.user}>`,
@@ -85,7 +94,11 @@ export async function getContactMessages(req, res) {
       .json({ success: false, message: 'MongoDB is not connected.' });
   }
   try {
-    const messages = await ContactMessage.find().sort({ createdAt: -1 }).limit(100);
+    const messages = await ContactMessage.find()
+      .select('name email message createdAt')
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .lean();
     res.json({ success: true, count: messages.length, data: messages });
   } catch (error) {
     console.error('[contact] Failed to list messages:', error.message);

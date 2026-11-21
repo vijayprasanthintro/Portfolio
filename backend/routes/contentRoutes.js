@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   getPublicContent,
+  getAsset,
   getSection,
   saveSection,
   resetSection,
@@ -11,6 +12,8 @@ const router = Router();
 
 // Public
 router.get('/', getPublicContent);
+// Must be registered before '/:section' so it isn't treated as a section name.
+router.get('/asset/*', getAsset);
 
 // Admin (protected)
 router.get('/:section', protect, getSection);

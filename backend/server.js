@@ -15,8 +15,8 @@ validateEnv();
 const app = express();
 
 app.use(cors({ origin: env.clientOrigin, credentials: true }));
-// 8mb since content saves can include base64 images
-app.use(express.json({ limit: '8mb' }));
+// Content saves can include base64 images (capped at ~3MB in the controller).
+app.use(express.json({ limit: '5mb' }));
 
 if (env.nodeEnv === 'development') {
   app.use(morgan('dev'));

@@ -2,7 +2,8 @@ import mongoose from 'mongoose';
 
 const contentSchema = new mongoose.Schema(
   {
-    section: { type: String, required: true, unique: true, index: true },
+    // `unique` already creates the index; declaring both is redundant.
+    section: { type: String, required: true, unique: true },
     data: { type: mongoose.Schema.Types.Mixed, required: true },
     updatedBy: { type: String, default: '' },
   },
