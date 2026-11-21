@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, memo, Suspense, useCallback, useEffect, useState } from 'react';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { TechMarquee } from './components/TechMarquee';
@@ -20,7 +20,34 @@ import { CustomCursor } from './components/CustomCursor';
 import { BackToTop } from './components/BackToTop';
 import { useTheme } from './hooks/useTheme';
 import { ContentProvider } from './content/ContentContext';
-import { AdminApp } from './admin/AdminApp';
+
+// The admin panel is a separate route and never needed by portfolio visitors.
+// Splitting it out keeps its editor UI out of the initial bundle.
+const AdminApp = lazy(() =>
+  import('./admin/AdminApp').then((module) => ({ default: module.AdminApp }))
+);
+
+// Sections have no props; memoising them stops a theme toggle (or any other
+// Portfolio-level state change) from re-rendering the whole page.
+const Static = {
+  Hero: memo(Hero),
+  TechMarquee: memo(TechMarquee),
+  About: memo(About),
+  Skills: memo(Skills),
+  MernFlow: memo(MernFlow),
+  Projects: memo(Projects),
+  Experience: memo(Experience),
+  Journey: memo(Journey),
+  Education: memo(Education),
+  BuildSection: memo(BuildSection),
+  GithubSection: memo(GithubSection),
+  Contact: memo(Contact),
+  Footer: memo(Footer),
+  Backdrop: memo(Backdrop),
+  ScrollProgress: memo(ScrollProgress),
+  CustomCursor: memo(CustomCursor),
+  BackToTop: memo(BackToTop),
+};
 
 function useHashRoute() {
   const [hash, setHash] = useState(() => window.location.hash);
@@ -35,32 +62,33 @@ function useHashRoute() {
 function Portfolio() {
   const { theme, toggleTheme } = useTheme();
   const [booted, setBooted] = useState(false);
+  const onBootDone = useCallback(() => setBooted(true), []);
 
   return (
     <>
-      <Preloader onDone={() => setBooted(true)} />
+      <Preloader onDone={onBootDone} />
       {booted && (
         <>
-          <CustomCursor />
-          <Backdrop />
-          <ScrollProgress />
+          <Static.CustomCursor />
+          <Static.Backdrop />
+          <Static.ScrollProgress />
           <Navbar theme={theme} onToggleTheme={toggleTheme} />
           <main>
-            <Hero />
-            <TechMarquee />
-            <About />
-            <Skills />
-            <MernFlow />
-            <Projects />
-            <Experience />
-            <Journey />
-            <Education />
-            <BuildSection />
-            <GithubSection />
-            <Contact />
+            <Static.Hero />
+            <Static.TechMarquee />
+            <Static.About />
+            <Static.Skills />
+            <Static.MernFlow />
+            <Static.Projects />
+            <Static.Experience />
+            <Static.Journey />
+            <Static.Education />
+            <Static.BuildSection />
+            <Static.GithubSection />
+            <Static.Contact />
           </main>
-          <Footer />
-          <BackToTop />
+          <Static.Footer />
+          <Static.BackToTop />
         </>
       )}
     </>
@@ -71,5 +99,15 @@ export default function App() {
   const hash = useHashRoute();
   const isAdmin = hash.startsWith('#/admin');
 
-  return <ContentProvider>{isAdmin ? <AdminApp /> : <Portfolio />}</ContentProvider>;
+  return (
+    <ContentProvider>
+      {isAdmin ? (
+        <Suspense fallback={<div className="admin-loading admin-boot-loading">Loading admin panel…</div>}>
+          <AdminApp />
+        </Suspense>
+      ) : (
+        <Portfolio />
+      )}
+    </ContentProvider>
+  );
 }

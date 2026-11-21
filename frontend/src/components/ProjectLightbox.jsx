@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, ImageOff } from 'lucide-react';
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { ProjectImage } from './ProjectImage';
 
 // fullscreen image view, opens from the Show Image button on a project card
@@ -9,17 +10,15 @@ import { ProjectImage } from './ProjectImage';
 export function ProjectLightbox({ project, onClose }) {
   const reduced = usePrefersReducedMotion();
 
+  useBodyScrollLock(Boolean(project));
+
   useEffect(() => {
-    if (!project) return;
-    document.body.style.overflow = 'hidden';
+    if (!project) return undefined;
     const onKey = (e) => {
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', onKey);
-    return () => {
-      document.body.style.overflow = '';
-      window.removeEventListener('keydown', onKey);
-    };
+    return () => window.removeEventListener('keydown', onKey);
   }, [project, onClose]);
 
   return (

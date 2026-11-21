@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
 import { useTypewriter } from '../hooks/useTypewriter';
 import { TiltCard } from './TiltCard';
@@ -37,7 +37,7 @@ function normalizeScript(script, typingDelay, outputDelay) {
 // Premium animated terminal window: typing effect, blinking cursor,
 // traffic-light dots, scanline and a subtle tilt + hover glow.
 //
-// - No props → the default hero script (loops).
+// - No props → the default hero script (loops while visible).
 // - About passes `script` ([{ command, output }]) + `title` + delays (types once).
 export function Terminal({
   className = '',
@@ -48,6 +48,8 @@ export function Terminal({
   compact = false,
 }) {
   const reduced = usePrefersReducedMotion();
+  const bodyRef = useRef(null);
+  const [visible, setVisible] = useState(true);
   const steps = useMemo(() => normalizeScript(script, typingDelay, outputDelay) ?? buildScript(), [
     script,
     typingDelay,
@@ -59,16 +61,30 @@ export function Terminal({
     startDelay: 600,
     reduced,
     cycle,
+    active: visible,
   });
+
+  // Only type/restart while the terminal is actually on screen. Off-screen
+  // terminals would otherwise keep timers and state updates running forever.
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return undefined;
+    const observer = new IntersectionObserver(
+      ([entry]) => setVisible(entry.isIntersecting),
+      { rootMargin: '120px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   // Only the default hero terminal loops; custom scripts run once.
   useEffect(() => {
-    if (!finished || reduced || script) return;
+    if (!finished || reduced || script || !visible) return;
     const t = setTimeout(() => setCycle((c) => c + 1), 4200);
     return () => clearTimeout(t);
-  }, [finished, reduced, script]);
+  }, [finished, reduced, script, visible]);
 
-  const idle = !active && (finished || done.length === 0);
+  const idle = visible && !active && (finished || done.length === 0);
 
   return (
     <TiltCard
@@ -89,7 +105,7 @@ export function Terminal({
         </span>
       </div>
 
-      <div className="terminal-body">
+      <div className="terminal-body" ref={bodyRef}>
         {done.map((line, i) =>
           line.type === 'cmd' ? (
             <div className="term-cmd" key={i}>

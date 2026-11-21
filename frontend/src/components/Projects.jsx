@@ -1,15 +1,21 @@
-import { useState } from 'react';
+import { lazy, memo, Suspense, useCallback, useMemo, useState } from 'react';
 import { Github, Rocket, ExternalLink, Star, Info, Image as ImageIcon } from 'lucide-react';
 import { projects as defaultProjects } from '../data/projects';
 import { SectionHeading } from './SectionHeading';
 import { Reveal } from './Reveal';
 import { SpotlightCard } from './SpotlightCard';
-import { ProjectModal } from './ProjectModal';
-import { ProjectLightbox } from './ProjectLightbox';
 import { Magnetic } from './Magnetic';
 import { useContent } from '../content/ContentContext';
 
-function CardButtons({ project, onDetails, onImage }) {
+// Dialogs are only needed after a user action, so keep them out of the initial bundle.
+const ProjectModal = lazy(() =>
+  import('./ProjectModal').then((module) => ({ default: module.ProjectModal }))
+);
+const ProjectLightbox = lazy(() =>
+  import('./ProjectLightbox').then((module) => ({ default: module.ProjectLightbox }))
+);
+
+const CardButtons = memo(function CardButtons({ project, onDetails, onImage }) {
   return (
     <div className="project-actions">
       {project.demo ? (
@@ -51,9 +57,9 @@ function CardButtons({ project, onDetails, onImage }) {
       </Magnetic>
     </div>
   );
-}
+});
 
-function ProjectHead({ project }) {
+const ProjectHead = memo(function ProjectHead({ project }) {
   return (
     <div className="project-head">
       {project.featured && (
@@ -65,7 +71,7 @@ function ProjectHead({ project }) {
       <span className="project-role">{project.role}</span>
     </div>
   );
-}
+});
 
 export function Projects() {
   const [selected, setSelected] = useState(null);
@@ -73,8 +79,16 @@ export function Projects() {
   const { content } = useContent();
   const projects = content.projects || defaultProjects;
 
-  const featured = projects.filter((p) => p.featured);
-  const rest = projects.filter((p) => !p.featured);
+  const { featured, rest } = useMemo(
+    () => ({
+      featured: projects.filter((p) => p.featured),
+      rest: projects.filter((p) => !p.featured),
+    }),
+    [projects]
+  );
+
+  const closeDetails = useCallback(() => setSelected(null), []);
+  const closeImage = useCallback(() => setImageFor(null), []);
 
   return (
     <section id="projects" aria-label="Projects">
@@ -147,8 +161,16 @@ export function Projects() {
         </div>
       </div>
 
-      <ProjectModal project={selected} onClose={() => setSelected(null)} />
-      <ProjectLightbox project={imageFor} onClose={() => setImageFor(null)} />
+      {selected && (
+        <Suspense fallback={null}>
+          <ProjectModal project={selected} onClose={closeDetails} />
+        </Suspense>
+      )}
+      {imageFor && (
+        <Suspense fallback={null}>
+          <ProjectLightbox project={imageFor} onClose={closeImage} />
+        </Suspense>
+      )}
     </section>
   );
 }

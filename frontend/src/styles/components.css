@@ -51,8 +51,6 @@
   color: var(--text-1);
   background: var(--surface-strong);
   border: 1px solid var(--border-strong);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
 }
 
 .btn-ghost:hover {
@@ -83,8 +81,8 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  /* No backdrop-filter here: dozens of glass cards forced the browser to
+     re-blur the page beneath them on every scroll frame. */
   transition: transform 0.35s var(--ease-out), border-color 0.35s var(--ease-out),
     background 0.35s var(--ease-out), box-shadow 0.35s var(--ease-out);
 }
@@ -228,7 +226,7 @@
   z-index: 100;
   height: var(--nav-height);
   transition: background 0.35s var(--ease-out), border-color 0.35s var(--ease-out),
-    backdrop-filter 0.35s var(--ease-out), box-shadow 0.35s var(--ease-out), height 0.35s var(--ease-out);
+    box-shadow 0.35s var(--ease-out), height 0.35s var(--ease-out);
   border-bottom: 1px solid transparent;
 }
 
@@ -236,8 +234,6 @@
   height: calc(var(--nav-height) - 10px);
   background: var(--navbar-bg);
   border-bottom-color: var(--border);
-  backdrop-filter: blur(16px) saturate(140%);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
   box-shadow: 0 8px 32px rgba(3, 6, 14, 0.45);
 }
 
@@ -374,8 +370,6 @@
   padding: calc(var(--nav-height) + 24px) 28px 32px;
   background: var(--mobile-menu-bg);
   border-left: 1px solid var(--border);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   box-shadow: -24px 0 64px rgba(3, 6, 14, 0.6);
   overflow-y: auto;
 }
@@ -430,9 +424,7 @@
   position: fixed;
   inset: 0;
   z-index: 98;
-  background: rgba(3, 6, 14, 0.6);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: rgba(3, 6, 14, 0.72);
 }
 
 /* ---------- Scroll progress ---------- */
@@ -541,7 +533,6 @@
     transparent 62%
   );
   transition: opacity 0.4s var(--ease-out);
-  will-change: transform;
 }
 
 .cursor-active .cursor-spotlight {
@@ -557,7 +548,6 @@
   border-radius: 50%;
   pointer-events: none;
   opacity: 0;
-  will-change: transform;
 }
 
 .cursor-active .cursor-dot,
@@ -601,7 +591,6 @@
   width: 16px;
   height: 16px;
   color: #fff;
-  filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.9));
 }
 
 .cursor-arrow svg {
@@ -695,14 +684,12 @@
   background: rgba(59, 130, 246, 0.45);
   opacity: 0;
   pointer-events: none;
-  filter: blur(0.5px);
   animation: trail-fade 0.6s var(--ease-out) forwards;
 }
 
 /* ---------- Magnetic wrapper ---------- */
 .magnetic-wrap {
   display: inline-block;
-  will-change: transform;
 }
 
 /* ---------- Back to top ---------- */
@@ -719,8 +706,6 @@
   color: var(--text-1);
   background: var(--surface-strong);
   border: 1px solid var(--border-strong);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   box-shadow: var(--shadow-md);
   transition: transform 0.25s var(--ease-out), border-color 0.25s var(--ease-out),
     box-shadow 0.25s var(--ease-out), background 0.25s var(--ease-out);
@@ -856,8 +841,13 @@
   pointer-events: none;
 }
 
+.nav-logo .gradient-text {
+  display: inline-block;
+  transition: transform 0.25s var(--ease-out);
+}
+
 .nav-logo:hover .gradient-text {
-  filter: drop-shadow(0 0 10px rgba(124, 92, 255, 0.7));
+  transform: translateY(-1px);
 }
 
 /* ---------- Skill proficiency bars ---------- */
@@ -910,7 +900,6 @@
   animation: term-float-y 7s ease-in-out infinite;
   transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
   transform-style: preserve-3d;
-  will-change: transform;
 }
 
 .terminal {
@@ -920,8 +909,6 @@
   background: linear-gradient(180deg, rgba(13, 17, 30, 0.92), rgba(8, 11, 22, 0.96));
   border: 1px solid var(--border-strong);
   box-shadow: 0 24px 64px rgba(3, 6, 14, 0.55), 0 0 0 1px rgba(139, 92, 246, 0.08);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   transition: border-color 0.35s var(--ease-out), box-shadow 0.35s var(--ease-out);
   animation: term-flicker 9s steps(1) infinite;
 }
@@ -1122,7 +1109,6 @@
   z-index: 2;
   pointer-events: none;
   background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.28), rgba(124, 92, 255, 0.28), transparent);
-  filter: blur(0.5px);
   animation: term-scanline-move 5.5s linear infinite;
 }
 
@@ -1151,7 +1137,6 @@
   width: max-content;
   gap: 0;
   animation: marquee-scroll 32s linear infinite;
-  will-change: transform;
 }
 
 .tech-marquee:hover .tech-marquee-track {

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { LogoMark } from './Logo';
 
 const BOOT = ['INITIALIZING PORTFOLIO', 'LOADING COMPONENTS', 'LOADING PROJECTS', 'CONNECTING', 'READY'];
@@ -35,12 +36,7 @@ export function Preloader({ onDone }) {
     return () => timers.forEach((t) => clearTimeout(t));
   }, [reduced, onDone]);
 
-  useEffect(() => {
-    document.body.style.overflow = loading ? 'hidden' : '';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [loading]);
+  useBodyScrollLock(loading);
 
   return (
     <AnimatePresence>

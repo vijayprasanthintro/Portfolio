@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { api } from '../config';
 
 const ContentContext = createContext(null);
+const ASSET_PREFIX = '/api/content/asset/';
 
 export function hexToRgba(hex, alpha) {
   let h = String(hex || '').replace('#', '').trim();
@@ -64,26 +65,49 @@ export function applyDesign(design) {
   }
 }
 
+// Asset URLs come back relative to `/api`; point them at the configured API
+// base so a separately-hosted backend works too.
+function resolveAssetUrls(value) {
+  if (typeof value === 'string') {
+    return value.startsWith(ASSET_PREFIX)
+      ? `${api.baseUrl}/content/asset/${value.slice(ASSET_PREFIX.length)}`
+      : value;
+  }
+  if (Array.isArray(value)) return value.map(resolveAssetUrls);
+  if (value && typeof value === 'object') {
+    const out = {};
+    for (const [key, item] of Object.entries(value)) out[key] = resolveAssetUrls(item);
+    return out;
+  }
+  return value;
+}
+
 export function ContentProvider({ children }) {
   const [content, setContent] = useState({});
   const [status, setStatus] = useState('loading'); // 'loading' | 'ready' | 'error'
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (signal) => {
     try {
-      const res = await fetch(`${api.baseUrl}/content`);
+      const res = await fetch(`${api.baseUrl}/content`, { signal });
       if (!res.ok) throw new Error(`Content API ${res.status}`);
       const data = await res.json();
-      setContent(data.content || {});
+      if (signal?.aborted) return false;
+      setContent(resolveAssetUrls(data.content || {}));
       setStatus('ready');
       return true;
-    } catch {
+    } catch (err) {
+      if (err.name === 'AbortError' || signal?.aborted) return false;
       setStatus('error');
       return false;
     }
   }, []);
 
   useEffect(() => {
-    refresh();
+    // StrictMode mounts effects twice in development; abort the first request
+    // instead of letting two responses race each other.
+    const controller = new AbortController();
+    refresh(controller.signal);
+    return () => controller.abort();
   }, [refresh]);
 
   // Keep design custom properties in sync.

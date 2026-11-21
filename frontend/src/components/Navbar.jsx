@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Menu, X, ChevronRight } from 'lucide-react';
 import { navLinks as defaultNav, socials as defaultSocials, profile as defaultProfile } from '../config';
 import { useActiveSection } from '../hooks/useActiveSection';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { ThemeToggle } from './ThemeToggle';
 import { Magnetic } from './Magnetic';
 import { LogoMark } from './Logo';
@@ -36,20 +37,23 @@ export function Navbar({ theme, onToggleTheme }) {
   const [indicator, setIndicator] = useState({ left: 0, width: 0, visible: false });
 
   useEffect(() => {
-    const onScroll = () => {
+    let frame = 0;
+    const measure = () => {
+      frame = 0;
       setPhase(window.scrollY > 24 ? 'scrolled' : 'top');
     };
-    onScroll();
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(measure);
+    };
+    measure();
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
   }, []);
 
-  useEffect(() => {
-    document.body.style.overflow = menuOpen ? 'hidden' : '';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [menuOpen]);
+  useBodyScrollLock(menuOpen);
 
   useEffect(() => {
     const nav = navLinksRef.current;
@@ -65,12 +69,12 @@ export function Navbar({ theme, onToggleTheme }) {
     update();
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
-  }, [active]);
+  }, [active, navLinks]);
 
-  const goTo = (id) => {
+  const goTo = useCallback((id) => {
     setMenuOpen(false);
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
+  }, []);
 
   return (
     <>

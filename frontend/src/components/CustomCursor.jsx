@@ -4,7 +4,7 @@ import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
 const ORBIT_COUNT = 3;
 const ORBIT_RADIUS = 17;
 const ORBIT_PERIOD = 2800; // ms per revolution
-const TRAIL_COUNT = 8;
+const TRAIL_COUNT = 6;
 const TRAIL_GAP = 20; // px between spawned dots while fast
 const TRAIL_MIN_SPEED = 1.1; // px per ms — only trails on quick swipes
 
@@ -64,6 +64,8 @@ const STATE_META = {
   text: { scale: 0.85, dot: 0.4, orb: 0, arrow: false, mag: false, label: '' },
 };
 
+const STATE_CLASSES = Object.keys(STATE_META).map((state) => `cursor-${state}`);
+
 export function CustomCursor() {
   const reduced = usePrefersReducedMotion();
   const [enabled, setEnabled] = useState(false);
@@ -82,6 +84,8 @@ export function CustomCursor() {
   const trailIdx = useRef(0);
   const last = useRef({ x: 0, y: 0, t: 0 });
   const spawned = useRef({ x: 0, y: 0 });
+  const restartTrail = useRef([]);
+  const clearTrail = useRef([]);
   const raf = useRef(0);
   const active = useRef(false);
 
@@ -91,9 +95,9 @@ export function CustomCursor() {
   }, []);
 
   useEffect(() => {
-    if (!enabled || reduced) return;
+    if (!enabled || reduced) return undefined;
     const root = rootRef.current;
-    if (!root) return;
+    if (!root) return undefined;
 
     document.documentElement.classList.add('vpc-cursor');
 
@@ -106,12 +110,10 @@ export function CustomCursor() {
 
     const applyState = (state) => {
       const meta = STATE_META[state] || STATE_META.default;
-      root.classList.remove(...Object.keys(STATE_META).map((s) => `cursor-${s}`));
+      root.classList.remove(...STATE_CLASSES);
       root.classList.add(`cursor-${state}`);
       stateRef.current = state;
-      if (arrowRef.current) {
-        arrowRef.current.style.display = meta.arrow ? 'block' : 'none';
-      }
+      if (arrowRef.current) arrowRef.current.style.display = meta.arrow ? 'block' : 'none';
       if (labelRef.current) {
         labelRef.current.style.display = meta.label ? 'block' : 'none';
         if (meta.label) labelRef.current.textContent = meta.label;
@@ -151,7 +153,7 @@ export function CustomCursor() {
       ripple.style.left = `${e.clientX}px`;
       ripple.style.top = `${e.clientY}px`;
       root.appendChild(ripple);
-      ripple.addEventListener('animationend', () => ripple.remove());
+      ripple.addEventListener('animationend', () => ripple.remove(), { once: true });
 
       // Small particle burst on click.
       const count = 8;
@@ -172,7 +174,7 @@ export function CustomCursor() {
         p.style.marginTop = `${-size / 2}px`;
         p.style.animationDelay = `${Math.floor(Math.random() * 40)}ms`;
         root.appendChild(p);
-        p.addEventListener('animationend', () => p.remove());
+        p.addEventListener('animationend', () => p.remove(), { once: true });
       }
     };
     const onUp = () => root.classList.remove('cursor-clicking');
@@ -197,6 +199,22 @@ export function CustomCursor() {
     document.documentElement.addEventListener('mouseleave', onLeaveWin);
 
     const tick = (t) => {
+      // Restart trail animations across two frames instead of forcing a
+      // synchronous reflow with `void dot.offsetWidth` on every spawn.
+      if (clearTrail.current.length) {
+        clearTrail.current.forEach((dot) => {
+          dot.style.animation = '';
+        });
+        clearTrail.current = [];
+      }
+      if (restartTrail.current.length) {
+        clearTrail.current = restartTrail.current;
+        restartTrail.current.forEach((dot) => {
+          dot.style.animation = 'none';
+        });
+        restartTrail.current = [];
+      }
+
       const p = pointer.current;
       const c = current.current;
       const meta = STATE_META[stateRef.current] || STATE_META.default;
@@ -261,9 +279,7 @@ export function CustomCursor() {
         if (dot) {
           dot.style.left = `${p.x}px`;
           dot.style.top = `${p.y}px`;
-          dot.style.animation = 'none';
-          void dot.offsetWidth;
-          dot.style.animation = '';
+          restartTrail.current.push(dot);
         }
         spawned.current.x = p.x;
         spawned.current.y = p.y;
@@ -287,6 +303,8 @@ export function CustomCursor() {
       cancelAnimationFrame(raf.current);
       trail.current.forEach((dot) => dot.remove());
       trail.current = [];
+      restartTrail.current = [];
+      clearTrail.current = [];
     };
   }, [enabled, reduced]);
 

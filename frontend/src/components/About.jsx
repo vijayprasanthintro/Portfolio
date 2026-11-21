@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { GraduationCap, Code2, Server, Sparkles } from 'lucide-react';
 import { profile as defaultProfile } from '../config';
 import { SectionIndex } from './SectionIndex';
@@ -54,7 +55,7 @@ export function About() {
   const headline = about.headline || defaultHeadline;
   const sub = about.sub || defaultSub;
 
-  const aboutScript = [
+  const aboutScript = useMemo(() => [
     {
       id: 'profile',
       command: 'vijay.profile',
@@ -72,7 +73,7 @@ export function About() {
       command: 'status',
       output: [`"${profile.availability}"`],
     },
-  ];
+  ], [profile.shortName, profile.role, profile.education.short, profile.availability, content.projects]);
 
   return (
     <section id="about" aria-label="About me">

@@ -10,23 +10,22 @@ import {
   Rocket,
 } from 'lucide-react';
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { Magnetic } from './Magnetic';
 import { ProjectImage } from './ProjectImage';
 
 export function ProjectModal({ project, onClose }) {
   const reduced = usePrefersReducedMotion();
 
+  useBodyScrollLock(Boolean(project));
+
   useEffect(() => {
-    if (!project) return;
-    document.body.style.overflow = 'hidden';
+    if (!project) return undefined;
     const onKey = (e) => {
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', onKey);
-    return () => {
-      document.body.style.overflow = '';
-      window.removeEventListener('keydown', onKey);
-    };
+    return () => window.removeEventListener('keydown', onKey);
   }, [project, onClose]);
 
   return (

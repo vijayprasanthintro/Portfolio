@@ -2,18 +2,14 @@
 .section-head-body .section-title,
 .section-head-body .section-kicker {
   opacity: 0;
-  transform: translateY(22px);
-  filter: blur(7px);
-  transition: opacity 0.85s var(--ease-out), transform 0.85s var(--ease-out),
-    filter 0.85s var(--ease-out);
+  transform: translate3d(0, 22px, 0);
+  transition: opacity 0.6s var(--ease-out), transform 0.6s var(--ease-out);
 }
 
 .section-head-body .section-sub {
   opacity: 0;
-  transform: translateY(16px);
-  filter: blur(5px);
-  transition: opacity 0.85s var(--ease-out) 0.12s, transform 0.85s var(--ease-out) 0.12s,
-    filter 0.85s var(--ease-out) 0.12s;
+  transform: translate3d(0, 16px, 0);
+  transition: opacity 0.6s var(--ease-out) 0.12s, transform 0.6s var(--ease-out) 0.12s;
 }
 
 .section-head-body.is-visible .section-title,
@@ -21,7 +17,6 @@
 .section-head-body.is-visible .section-sub {
   opacity: 1;
   transform: none;
-  filter: blur(0);
 }
 
 /* ---------- Animated statement text ---------- */
@@ -46,10 +41,8 @@
 .animated-headline .ah-line {
   display: block;
   opacity: 0;
-  transform: translateY(24px);
-  filter: blur(8px);
-  transition: opacity 0.85s var(--ease-out), transform 0.85s var(--ease-out),
-    filter 0.85s var(--ease-out);
+  transform: translate3d(0, 24px, 0);
+  transition: opacity 0.85s var(--ease-out), transform 0.85s var(--ease-out);
 }
 
 .animated-headline .ah-gradient {
@@ -63,7 +56,6 @@
 .animated-headline.is-visible .ah-line {
   opacity: 1;
   transform: none;
-  filter: blur(0);
 }
 
 .animated-headline.is-visible .ah-line:nth-child(2) {
@@ -81,12 +73,10 @@
 
 .animated-text-hi {
   background: var(--grad-text);
-  background-size: 200% auto;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
-  animation: grad-shift 7s ease-in-out infinite;
 }
 
 /* ---------- Backdrop (ambient) ---------- */
@@ -108,11 +98,11 @@
   mask-image: radial-gradient(1000px 700px at 50% 0%, #000 20%, transparent 78%);
 }
 
+/* Soft radial gradients give the same ambient glow as a blurred solid circle
+   without paying for a full-screen blur filter on every frame. */
 .backdrop-blob {
   position: absolute;
   border-radius: 50%;
-  filter: blur(90px);
-  will-change: transform;
 }
 
 .backdrop-blob.b1 {
@@ -120,7 +110,7 @@
   height: 520px;
   top: -160px;
   right: -120px;
-  background: rgba(59, 130, 246, 0.22);
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.22) 0%, rgba(59, 130, 246, 0) 70%);
 }
 
 .backdrop-blob.b2 {
@@ -128,7 +118,7 @@
   height: 460px;
   top: 42%;
   left: -200px;
-  background: rgba(34, 211, 238, 0.14);
+  background: radial-gradient(circle, rgba(34, 211, 238, 0.14) 0%, rgba(34, 211, 238, 0) 70%);
 }
 
 .backdrop-blob.b3 {
@@ -136,7 +126,7 @@
   height: 380px;
   bottom: -120px;
   right: 22%;
-  background: rgba(99, 102, 241, 0.16);
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.16) 0%, rgba(99, 102, 241, 0) 70%);
 }
 
 .backdrop-noise {
@@ -201,9 +191,7 @@
   position: absolute;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(147, 197, 253, 0.9), rgba(56, 189, 248, 0.35) 55%, transparent 72%);
-  filter: blur(0.5px);
   animation: light-float 12s linear infinite, light-blink 5s ease-in-out infinite;
-  will-change: transform, opacity;
 }
 
 .hero-glow {
@@ -218,7 +206,6 @@
   border-radius: 50%;
   pointer-events: none;
   opacity: 0.85;
-  filter: blur(40px);
   background: radial-gradient(circle, var(--hero-glow, rgba(59, 130, 246, 0.16)), transparent 62%);
   transform: translate(
     calc((var(--hx, 0.5) - 0.5) * 60px),
@@ -431,10 +418,8 @@
   width: 52px;
   height: 52px;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-strong);
   border: 1px solid var(--border-strong);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   box-shadow: var(--shadow-md);
 }
 
@@ -658,7 +643,6 @@
   transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg))
     translateY(var(--lift, 0px));
   transform-style: preserve-3d;
-  will-change: transform;
 }
 
 .skill-card {
@@ -957,8 +941,6 @@
   color: #fff;
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(34, 211, 238, 0.85));
   border: 1px solid rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
 }
 
@@ -1287,9 +1269,7 @@
 .github-card {
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
-  background: var(--surface);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: var(--surface-strong);
   padding: 30px;
 }
 
@@ -1422,8 +1402,6 @@
   position: absolute;
   inset: 0;
   background: var(--modal-backdrop);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
 }
 
 .modal {
@@ -1447,11 +1425,9 @@
   border-radius: 12px;
   display: grid;
   place-items: center;
-  background: rgba(7, 10, 20, 0.55);
+  background: rgba(7, 10, 20, 0.88);
   color: #fff;
   border: 1px solid var(--border-strong);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   transition: background 0.25s var(--ease-out), transform 0.25s var(--ease-out);
 }
 

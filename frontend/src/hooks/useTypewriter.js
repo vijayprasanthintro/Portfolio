@@ -8,19 +8,31 @@ import { useEffect, useState } from 'react';
 //   { type: 'pause', ms: 700 }
 //
 // `cycle` is bumped by the caller to restart the sequence (looping terminals).
-export function useTypewriter({ script, startDelay = 0, reduced = false, cycle = 0 }) {
+export function useTypewriter({ script, startDelay = 0, reduced = false, cycle = 0, active = true }) {
   const [done, setDone] = useState([]);
-  const [active, setActive] = useState(null);
+  const [activeStep, setActiveStep] = useState(null);
   const [finished, setFinished] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     const timers = [];
+    const pending = new Set();
 
     const wait = (ms) =>
       new Promise((resolve) => {
-        timers.push(setTimeout(resolve, ms));
+        const done = () => {
+          pending.delete(done);
+          resolve();
+        };
+        pending.add(done);
+        timers.push(setTimeout(done, ms));
       });
+
+    if (!active) {
+      return () => {
+        cancelled = true;
+      };
+    }
 
     if (reduced) {
       setDone(
@@ -28,7 +40,7 @@ export function useTypewriter({ script, startDelay = 0, reduced = false, cycle =
           .filter((s) => s.type === 'cmd' || s.type === 'out')
           .map((s) => ({ type: s.type, text: s.text, color: s.color }))
       );
-      setActive(null);
+      setActiveStep(null);
       setFinished(true);
       return () => {
         cancelled = true;
@@ -38,7 +50,7 @@ export function useTypewriter({ script, startDelay = 0, reduced = false, cycle =
 
     const run = async () => {
       setDone([]);
-      setActive(null);
+      setActiveStep(null);
       setFinished(false);
       await wait(startDelay);
 
@@ -47,15 +59,15 @@ export function useTypewriter({ script, startDelay = 0, reduced = false, cycle =
         if (cancelled) return;
 
         if (step.type === 'cmd') {
-          setActive({ text: '', target: step.text, color: step.color });
+          setActiveStep({ text: '', target: step.text, color: step.color });
           for (let i = 1; i <= step.text.length; i++) {
             await wait(step.speed || 60);
             if (cancelled) return;
-            setActive({ text: step.text.slice(0, i), target: step.text, color: step.color });
+            setActiveStep({ text: step.text.slice(0, i), target: step.text, color: step.color });
           }
           completed.push({ type: 'cmd', text: step.text, color: step.color });
           setDone([...completed]);
-          setActive(null);
+          setActiveStep(null);
           await wait(step.hold ?? 500);
         } else if (step.type === 'out') {
           await wait(step.delay ?? 260);
@@ -76,8 +88,11 @@ export function useTypewriter({ script, startDelay = 0, reduced = false, cycle =
     return () => {
       cancelled = true;
       timers.forEach(clearTimeout);
+      // Resolve pending waits so the async loop can exit instead of staying
+      // suspended on a timer that will never fire.
+      pending.forEach((done) => done());
     };
-  }, [script, startDelay, reduced, cycle]);
+  }, [script, startDelay, reduced, cycle, active]);
 
-  return { done, active, finished };
+  return { done, active: activeStep, finished };
 }

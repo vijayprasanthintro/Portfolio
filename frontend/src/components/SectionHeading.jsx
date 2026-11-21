@@ -1,22 +1,24 @@
+import { memo, useMemo } from 'react';
 import { Reveal } from './Reveal';
 import { SectionIndex } from './SectionIndex';
 
 // Renders a section number + kicker (via SectionIndex), the title and an
 // optional sub. `index` (or `num`) is the section number shown as "01/…".
 // `highlight` is an array of words in the title that get a gradient accent.
-function TitleWithHighlight({ text, highlight = [] }) {
-  if (!highlight.length) return text;
-  return text.split(/\s+/).map((word, i) => {
+const TitleWithHighlight = memo(function TitleWithHighlight({ text, highlight = [] }) {
+  const words = useMemo(() => (highlight.length ? text.split(/\s+/) : null), [text, highlight]);
+  if (!words) return text;
+  return words.map((word, i) => {
     const clean = word.replace(/[^\w]/g, '');
     const isHl = highlight.includes(clean);
     return (
       <span key={i}>
         {isHl ? <span className="gradient-text">{word}</span> : word}
-        {i < text.split(/\s+/).length - 1 ? ' ' : ''}
+        {i < words.length - 1 ? ' ' : ''}
       </span>
     );
   });
-}
+});
 
 export function SectionHeading({
   index,
