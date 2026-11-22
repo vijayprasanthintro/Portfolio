@@ -21,6 +21,8 @@ const contactMessageSchema = new mongoose.Schema(
       trim: true,
       maxlength: [5000, 'Message cannot exceed 5000 characters'],
     },
+    // Existing messages without this field are treated as unread.
+    read: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

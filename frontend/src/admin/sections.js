@@ -13,15 +13,20 @@ import {
   Palette,
   Inbox,
   Settings,
+  Briefcase,
+  GraduationCap,
+  Award,
+  FileText,
+  Images,
+  ShieldCheck,
 } from 'lucide-react';
 
 // Section editor types:
 //  object  -> the data is an object rendered from a list of fields
 //  records -> the data is an array of records (each rendered with its fields)
 //  strings -> the data is a plain array of strings
-
-// Field types (used inside object / records):
-//  text, textarea, number, toggle, color, strings, image, list (nested records)
+//
+// Field types: text, textarea, number, toggle, color, strings, image, list, object
 
 const text = (key, label, opts = {}) => ({ key, label, type: 'text', ...opts });
 const area = (key, label, opts = {}) => ({ key, label, type: 'textarea', ...opts });
@@ -33,38 +38,51 @@ const imageField = (key, label, opts = {}) => ({ key, label, type: 'image', ...o
 const recordList = (key, label, fields, opts = {}) => ({ key, label, type: 'list', fields, ...opts });
 const object = (key, label, fields) => ({ key, label, type: 'object', fields });
 
+export const navGroups = [
+  { key: 'overview', label: 'Overview' },
+  { key: 'content', label: 'Portfolio content' },
+  { key: 'management', label: 'Management' },
+  { key: 'system', label: 'System' },
+];
+
 export const sectionNav = [
-  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, desc: 'Overview and quick links' },
+  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, desc: 'Overview and quick links', group: 'overview' },
   {
     key: 'profile',
-    label: 'Profile',
+    label: 'Home / Hero',
     icon: User,
-    desc: 'Name, role, about paragraphs, education, internship',
+    desc: 'Name, title, introduction, photo and hero buttons',
     badge: 'core',
+    group: 'content',
   },
-  { key: 'about', label: 'About Section', icon: Info, desc: 'Headline, story cards and stats' },
-  { key: 'socials', label: 'Social Links', icon: Share2, desc: 'Email, phone, GitHub, LinkedIn' },
-  { key: 'nav', label: 'Navigation', icon: Menu, desc: 'Navbar and footer links' },
-  { key: 'skills', label: 'Skills', icon: Wrench, desc: 'Skill groups and proficiency levels' },
-  { key: 'projects', label: 'Projects', icon: FolderKanban, desc: 'Portfolio projects with details' },
-  { key: 'journey', label: 'Journey', icon: Route, desc: 'Learning timeline steps' },
-  { key: 'mern', label: 'MERN Stack', icon: Atom, desc: 'Stack flow cards' },
-  { key: 'build', label: 'What I Build', icon: Hammer, desc: 'Service cards' },
-  { key: 'tech', label: 'Tech Marquee', icon: Monitor, desc: 'Scrolling technology strip' },
-  { key: 'design', label: 'Design', icon: Palette, desc: 'Colors, fonts and logo', badge: 'premium' },
-  { key: 'messages', label: 'Messages', icon: Inbox, desc: 'Contact form submissions' },
-  { key: 'account', label: 'Account', icon: Settings, desc: 'Change your admin password' },
+  { key: 'about', label: 'About Me', icon: Info, desc: 'Headline, story cards and stats', group: 'content' },
+  { key: 'skills', label: 'Technical Skills', icon: Wrench, desc: 'Groups, icons and ordering', group: 'content' },
+  { key: 'experience', label: 'Experience', icon: Briefcase, desc: 'Roles, companies and achievements', group: 'content' },
+  { key: 'projects', label: 'Projects', icon: FolderKanban, desc: 'Project details, media and links', group: 'content' },
+  { key: 'education', label: 'Education', icon: GraduationCap, desc: 'Institutions and qualifications', group: 'content' },
+  { key: 'certificates', label: 'Certificates', icon: Award, desc: 'Credentials and badge images', group: 'content' },
+  { key: 'socials', label: 'Contact Information', icon: Share2, desc: 'Email, phone, GitHub, LinkedIn and more', group: 'content' },
+  { key: 'build', label: 'Development Approach', icon: Hammer, desc: 'Workflow and service cards', group: 'content' },
+  { key: 'mern', label: 'Engineering Focus', icon: Atom, desc: 'Stack focus areas and ordering', group: 'content' },
+  { key: 'journey', label: 'Learning Journey', icon: Route, desc: 'Learning timeline steps', group: 'content' },
+  { key: 'tech', label: 'Tech Marquee', icon: Monitor, desc: 'Scrolling technology strip', group: 'content' },
+  { key: 'nav', label: 'Navigation', icon: Menu, desc: 'Navbar and footer links', group: 'content' },
+  { key: 'design', label: 'Design System', icon: Palette, desc: 'Colors, fonts and logo', badge: 'premium', group: 'content' },
+  { key: 'resume', label: 'Resume', icon: FileText, desc: 'Upload, replace and share your PDF', group: 'management' },
+  { key: 'media', label: 'Media Library', icon: Images, desc: 'Images, screenshots and documents', group: 'management' },
+  { key: 'messages', label: 'Messages', icon: Inbox, desc: 'Contact form inbox', group: 'management' },
+  { key: 'settings', label: 'Settings', icon: Settings, desc: 'Account, theme and session', group: 'system' },
 ];
 
 export const sections = {
   profile: {
-    title: 'Profile',
+    title: 'Home / Hero',
     description: 'The identity shown across the whole site.',
     type: 'object',
     schema: [
-      text('name', 'Full name'),
+      text('name', 'Full name', { required: true, placeholder: 'Your full name' }),
       text('shortName', 'Short name'),
-      text('role', 'Job title / role'),
+      text('role', 'Job title / role', { required: true }),
       area('headline', 'Headline'),
       area('intro', 'Introduction'),
       stringsField('about', 'About paragraphs'),
@@ -73,8 +91,13 @@ export const sections = {
       imageField('image', 'Profile photo', {
         hint: 'Shown in the hero. Press Save to publish — replace or remove it any time.',
       }),
-      text('resume', 'Resume file path', { hint: 'Path inside frontend/public, e.g. /Vijayprasanth-Resume.pdf' }),
-      object('education', 'Education', [
+      recordList(
+        'heroButtons',
+        'Extra hero buttons',
+        [text('label', 'Button label', { required: true }), text('href', 'Link / URL', { required: true }), text('style', 'Style', { hint: 'primary or ghost' })],
+        { addLabel: 'Add button' }
+      ),
+      object('education', 'Education summary', [
         text('degree', 'Degree'),
         text('short', 'Short code'),
         text('institution', 'Institution'),
@@ -83,7 +106,7 @@ export const sections = {
         text('status', 'Status'),
         number('cgpa', 'CGPA', { step: '0.1' }),
       ]),
-      object('internship', 'Internship / Experience', [
+      object('internship', 'Internship / Experience summary', [
         text('role', 'Role'),
         text('company', 'Company'),
         text('period', 'Period'),
@@ -95,7 +118,7 @@ export const sections = {
   },
 
   about: {
-    title: 'About Section',
+    title: 'About Me',
     description: 'The animated heading, intro cards and stat counters.',
     type: 'object',
     schema: [
@@ -117,7 +140,7 @@ export const sections = {
   },
 
   socials: {
-    title: 'Social Links',
+    title: 'Contact Information',
     description: 'How visitors reach you.',
     type: 'object',
     schema: [
@@ -127,7 +150,8 @@ export const sections = {
       text('github', 'GitHub profile URL'),
       text('githubUser', 'GitHub username'),
       text('linkedin', 'LinkedIn URL'),
-      text('website', 'Website URL'),
+      text('instagram', 'Instagram URL'),
+      text('website', 'Portfolio URL'),
     ],
   },
 
@@ -137,24 +161,45 @@ export const sections = {
     type: 'records',
     nameKey: 'label',
     addLabel: 'Add link',
-    fields: [text('id', 'Section id'), text('label', 'Label')],
+    fields: [text('id', 'Section id', { required: true }), text('label', 'Label', { required: true })],
   },
 
   skills: {
-    title: 'Skills',
-    description: 'Skill groups. Each group has a title, description and individual skills.',
+    title: 'Technical Skills',
+    description: 'Skill groups — add, edit, delete and reorder individual skills.',
     type: 'records',
     nameKey: 'title',
     addLabel: 'Add group',
     fields: [
       text('id', 'Group id', { hint: 'frontend, backend, database, programming, tools, concepts' }),
-      text('title', 'Group title'),
+      text('title', 'Group title', { required: true }),
       area('description', 'Group description'),
+      number('order', 'Display order', { min: 0 }),
       recordList('skills', 'Skills', [
-        text('name', 'Skill name'),
+        text('name', 'Skill name', { required: true }),
         area('desc', 'Description'),
         number('level', 'Level (1–5)', { min: 1, max: 5 }),
-      ]),
+        text('icon', 'Icon key', { hint: 'Optional: react, node, mongo, github…' }),
+      ], { addLabel: 'Add skill' }),
+    ],
+  },
+
+  experience: {
+    title: 'Experience',
+    description: 'Roles, internships and achievements.',
+    type: 'records',
+    nameKey: 'role',
+    addLabel: 'Add experience',
+    fields: [
+      text('id', 'Record id'),
+      text('role', 'Role / position', { required: true }),
+      text('company', 'Company', { required: true }),
+      text('period', 'Duration / period'),
+      text('duration', 'Short duration'),
+      area('description', 'Description'),
+      stringsField('points', 'Achievement points'),
+      stringsField('tags', 'Technologies'),
+      number('order', 'Display order', { min: 0 }),
     ],
   },
 
@@ -166,26 +211,71 @@ export const sections = {
     addLabel: 'Add project',
     fields: [
       text('id', 'Project id'),
-      text('name', 'Name'),
+      text('name', 'Name', { required: true }),
       text('role', 'Role / subtitle'),
       toggle('featured', 'Featured (large card)'),
-      area('short', 'Short description (card)'),
-      area('description', 'Full description (modal)'),
-      stringsField('stack', 'Technologies'),
+      area('short', 'Overview (card)', { required: true }),
+      area('description', 'Full description'),
+      area('problem', 'Problem'),
+      area('approach', 'Approach'),
+      area('outcome', 'Outcome'),
+      stringsField('stack', 'Technology stack'),
       stringsField('features', 'Key features'),
       stringsField('challenges', 'Challenges'),
       stringsField('learned', 'What I learned'),
-      imageField('image', 'Project image', {
+      imageField('image', 'Project thumbnail', {
         hint: 'Shown on the card and in View Details. Press Save to publish.',
+      }),
+      stringsField('screenshots', 'Screenshot URLs', {
+        hint: 'Copy stable URLs from the Media Library.',
       }),
       text('alt', 'Image alt text'),
       text('github', 'GitHub URL'),
       text('demo', 'Live demo URL', { hint: 'Leave blank if there is no live URL' }),
+      number('order', 'Display order', { min: 0 }),
+    ],
+  },
+
+  education: {
+    title: 'Education',
+    description: 'Academic qualifications.',
+    type: 'records',
+    nameKey: 'degree',
+    addLabel: 'Add education',
+    fields: [
+      text('id', 'Record id'),
+      text('degree', 'Degree', { required: true }),
+      text('department', 'Department'),
+      text('institution', 'Institution', { required: true }),
+      text('location', 'Location'),
+      text('years', 'Duration'),
+      text('status', 'Status'),
+      number('cgpa', 'CGPA', { step: '0.1' }),
+      area('description', 'Description'),
+      number('order', 'Display order', { min: 0 }),
+    ],
+  },
+
+  certificates: {
+    title: 'Certificates',
+    description: 'Credentials shown in the Education section.',
+    type: 'records',
+    nameKey: 'title',
+    addLabel: 'Add certificate',
+    fields: [
+      text('id', 'Record id'),
+      text('title', 'Certificate title', { required: true }),
+      text('issuer', 'Issuing organisation'),
+      text('date', 'Issue date'),
+      area('description', 'Description'),
+      text('url', 'Certificate URL', { hint: 'A PDF or verification link (optional)' }),
+      imageField('image', 'Certificate image'),
+      number('order', 'Display order', { min: 0 }),
     ],
   },
 
   journey: {
-    title: 'Journey',
+    title: 'Learning Journey',
     description: 'Steps in the learning timeline.',
     type: 'records',
     nameKey: 'title',
@@ -194,31 +284,33 @@ export const sections = {
   },
 
   mern: {
-    title: 'MERN Stack',
-    description: 'Cards in the MERN architecture flow.',
+    title: 'Engineering Focus',
+    description: 'Focus areas in the MERN architecture flow.',
     type: 'records',
     nameKey: 'name',
-    addLabel: 'Add layer',
+    addLabel: 'Add focus area',
     fields: [
-      text('id', 'Layer id', { hint: 'react, node, express, mongo' }),
-      text('name', 'Name'),
+      text('id', 'Area id', { hint: 'react, node, express, mongo' }),
+      text('name', 'Name', { required: true }),
       text('role', 'Role'),
       text('desc', 'Description'),
       color('color', 'Accent color'),
+      number('order', 'Display order', { min: 0 }),
     ],
   },
 
   build: {
-    title: 'What I Build',
-    description: 'Service cards describing what you build.',
+    title: 'Development Approach',
+    description: 'Workflow steps and service cards.',
     type: 'records',
     nameKey: 'title',
-    addLabel: 'Add card',
+    addLabel: 'Add step',
     fields: [
-      text('id', 'Card id'),
+      text('id', 'Step id'),
       text('icon', 'Icon key', { hint: 'monitor, layers, plug, cart' }),
-      text('title', 'Title'),
+      text('title', 'Title', { required: true }),
       area('desc', 'Description'),
+      number('order', 'Display order', { min: 0 }),
     ],
   },
 
@@ -230,7 +322,7 @@ export const sections = {
   },
 
   design: {
-    title: 'Design',
+    title: 'Design System',
     description: 'Brand colors, gradients, fonts and logo — applied live to the whole site.',
     type: 'object',
     schema: [
@@ -243,7 +335,7 @@ export const sections = {
       text('fontDisplay', 'Display font stack'),
       text('fontBody', 'Body font stack'),
       text('fontMono', 'Mono font stack'),
-      text('logoText', 'Logo text', { hint: 'The “gradient part” is drawn from the final “.”' }),
+      text('logoText', 'Logo text', { hint: 'The gradient part is drawn from the final "."' }),
       number('radius', 'Corner radius (px)', { min: 4, max: 32 }),
     ],
   },
@@ -251,9 +343,4 @@ export const sections = {
 
 export function getSectionMeta(key) {
   return sectionNav.find((s) => s.key === key);
-}
-
-// Flattens a nested field list into record fields for the "records" type.
-export function getRecordFields(meta) {
-  return meta.fields || [];
 }

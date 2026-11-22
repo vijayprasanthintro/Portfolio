@@ -87,3 +87,86 @@ export function adminGetMessages() {
 export function adminDeleteMessage(id) {
   return http(`/contact/${id}`, { method: 'DELETE', auth: true });
 }
+
+export function adminSetMessageRead(id, read) {
+  return http(`/contact/${id}/read`, {
+    method: 'PATCH',
+    body: { read },
+    auth: true,
+  });
+}
+
+export function adminGetOverview() {
+  return http('/admin/overview', { auth: true });
+}
+
+export function adminGetResume() {
+  return http('/admin/resume', { auth: true });
+}
+
+export function adminDeleteResume() {
+  return http('/admin/resume', { method: 'DELETE', auth: true });
+}
+
+export function adminListAssets(kind) {
+  return http(`/admin/assets${kind ? `?kind=${encodeURIComponent(kind)}` : ''}`, { auth: true });
+}
+
+export function adminDeleteAsset(key) {
+  return http(`/admin/assets/key/${encodeURIComponent(key)}`, { method: 'DELETE', auth: true });
+}
+
+// XHR is used for files so real upload progress can be shown on mobile.
+function uploadFile(path, file, { method = 'POST', extra = {}, onProgress } = {}) {
+  return new Promise((resolve, reject) => {
+    const token = adminToken.get();
+    const xhr = new XMLHttpRequest();
+    xhr.open(method, `${api.baseUrl}${path}`);
+    if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+
+    if (xhr.upload && onProgress) {
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) onProgress(Math.min(100, Math.round((event.loaded / event.total) * 100)));
+      };
+    }
+
+    xhr.onload = () => {
+      const data = JSON.parse(xhr.responseText || '{}');
+      if (xhr.status >= 200 && xhr.status < 300) {
+        onProgress?.(100);
+        resolve(data);
+        return;
+      }
+      const err = new Error(data.message || `Upload failed (${xhr.status})`);
+      err.status = xhr.status;
+      reject(err);
+    };
+    xhr.onerror = () => reject(new Error('Network error — check your connection and try again.'));
+    xhr.onabort = () => reject(new Error('Upload cancelled.'));
+
+    const form = new FormData();
+    form.append('file', file);
+    Object.entries(extra).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) form.append(key, String(value));
+    });
+    xhr.send(form);
+  });
+}
+
+export function adminUploadResume(file, onProgress) {
+  return uploadFile('/admin/resume', file, { onProgress });
+}
+
+export function adminUploadAsset(file, { kind = 'image', key, onProgress } = {}) {
+  return uploadFile('/admin/assets', file, {
+    onProgress,
+    extra: { kind, key },
+  });
+}
+
+export function adminReplaceAsset(key, file, onProgress) {
+  return uploadFile(`/admin/assets/key/${encodeURIComponent(key)}`, file, {
+    method: 'PUT',
+    onProgress,
+  });
+}

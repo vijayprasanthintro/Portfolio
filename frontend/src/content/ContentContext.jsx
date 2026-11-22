@@ -3,6 +3,8 @@ import { api } from '../config';
 
 const ContentContext = createContext(null);
 const ASSET_PREFIX = '/api/content/asset/';
+const FILE_ASSET_PREFIX = '/api/assets/';
+const API_PREFIX = '/api/';
 
 export function hexToRgba(hex, alpha) {
   let h = String(hex || '').replace('#', '').trim();
@@ -69,9 +71,18 @@ export function applyDesign(design) {
 // base so a separately-hosted backend works too.
 function resolveAssetUrls(value) {
   if (typeof value === 'string') {
-    return value.startsWith(ASSET_PREFIX)
-      ? `${api.baseUrl}/content/asset/${value.slice(ASSET_PREFIX.length)}`
-      : value;
+    // Stored URLs already start with `/api`. Avoid turning them into
+    // `/api/api/...` when the frontend uses the default proxy base URL.
+    if (value.startsWith(ASSET_PREFIX)) {
+      return `${api.baseUrl}/content/asset/${value.slice(ASSET_PREFIX.length)}`;
+    }
+    if (value.startsWith(FILE_ASSET_PREFIX)) {
+      return `${api.baseUrl}/assets/${value.slice(FILE_ASSET_PREFIX.length)}`;
+    }
+    if (value.startsWith(API_PREFIX) && api.baseUrl !== '/api') {
+      return `${api.baseUrl.replace(/\/$/, '')}/${value.slice(API_PREFIX.length)}`;
+    }
+    return value;
   }
   if (Array.isArray(value)) return value.map(resolveAssetUrls);
   if (value && typeof value === 'object') {

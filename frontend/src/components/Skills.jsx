@@ -22,7 +22,8 @@ function SkillBar({ level }) {
 
 export function Skills() {
   const { content } = useContent();
-  const skillGroups = content.skills || defaultGroups;
+  const savedGroups = Array.isArray(content.skills) && content.skills.length ? content.skills : defaultGroups;
+  const skillGroups = [...savedGroups].sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
 
   return (
     <section id="skills" aria-label="Skills">

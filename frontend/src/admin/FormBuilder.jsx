@@ -6,7 +6,7 @@ function clone(value) {
   return Array.isArray(value) ? [...value] : value && typeof value === 'object' ? { ...value } : value;
 }
 
-function StringsEditor({ value = [], onChange, addLabel = 'Add item' }) {
+function StringsEditor({ value = [], onChange, addLabel = 'Add item', placeholder }) {
   const items = Array.isArray(value) ? value : [];
   const set = (i, v) => onChange(items.map((it, idx) => (idx === i ? v : it)));
   const remove = (i) => onChange(items.filter((_, idx) => idx !== i));
@@ -20,7 +20,7 @@ function StringsEditor({ value = [], onChange, addLabel = 'Add item' }) {
             className="af-input"
             value={item}
             onChange={(e) => set(i, e.target.value)}
-            placeholder="Type and press the trash to remove"
+            placeholder={placeholder || 'Type and press the trash to remove'}
           />
           <button type="button" className="af-icon-btn danger" onClick={() => remove(i)} aria-label="Remove" title="Remove">
             <Trash2 size={15} />
@@ -44,8 +44,21 @@ function RecordListEditor({
   nameKey,
 }) {
   const items = Array.isArray(value) ? value : [];
+  const [query, setQuery] = useState('');
+  const visible = query.trim()
+    ? items
+        .map((item, index) => ({ item, index }))
+        .filter(({ item }) =>
+          JSON.stringify(item || {}).toLowerCase().includes(query.trim().toLowerCase())
+        )
+    : items.map((item, index) => ({ item, index }));
   const updateItem = (i, v) => onChange(items.map((it, idx) => (idx === i ? v : it)));
-  const remove = (i) => onChange(items.filter((_, idx) => idx !== i));
+  const remove = (i) => {
+    const label = nameKey && items[i]?.[nameKey] ? `“${items[i][nameKey]}”` : 'this record';
+    if (window.confirm(`Delete ${label}? This takes effect after you publish the section.`)) {
+      onChange(items.filter((_, idx) => idx !== i));
+    }
+  };
   const move = (i, dir) => {
     const next = [...items];
     const j = i + dir;
@@ -65,7 +78,20 @@ function RecordListEditor({
 
   return (
     <div className="af-records">
-      {items.map((item, i) => (
+      {items.length >= 4 && (
+        <input
+          className="af-input af-record-search"
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={`Search ${addLabel.toLowerCase()}…`}
+          aria-label={`Search ${addLabel.toLowerCase()}`}
+        />
+      )}
+      {visible.length === 0 && query.trim() && (
+        <p className="af-search-empty">No records match “{query}”.</p>
+      )}
+      {visible.map(({ item, index: i }) => (
         <div className="af-record" key={i}>
           <div className="af-record-head">
             <span className="af-record-index">{String(i + 1).padStart(2, '0')}</span>
@@ -185,6 +211,7 @@ function Field({ field, value, onChange }) {
   const labelEl = (
     <label className="af-label" htmlFor={field.key}>
       {label}
+      {field.required && <span className="af-required" aria-label="required">*</span>}
       {hint && <span className="af-hint">{hint}</span>}
     </label>
   );
@@ -194,7 +221,14 @@ function Field({ field, value, onChange }) {
       return (
         <div className="af-field">
           {labelEl}
-          <textarea className="af-input area" rows={4} value={value || ''} onChange={(e) => onChange(e.target.value)} />
+          <textarea
+            className="af-input area"
+            rows={4}
+            value={value || ''}
+            placeholder={field.placeholder}
+            required={field.required}
+            onChange={(e) => onChange(e.target.value)}
+          />
         </div>
       );
     case 'number':
@@ -208,6 +242,8 @@ function Field({ field, value, onChange }) {
             min={field.min}
             max={field.max}
             step={field.step}
+            placeholder={field.placeholder}
+            required={field.required}
             onChange={(e) => onChange(e.target.value === '' ? '' : Number(e.target.value))}
           />
         </div>
@@ -238,7 +274,7 @@ function Field({ field, value, onChange }) {
       return (
         <div className="af-field">
           {labelEl}
-          <StringsEditor value={value} onChange={onChange} addLabel={field.addLabel} />
+          <StringsEditor value={value} onChange={onChange} addLabel={field.addLabel} placeholder={field.placeholder} />
         </div>
       );
     case 'list':
@@ -268,7 +304,13 @@ function Field({ field, value, onChange }) {
       return (
         <div className="af-field">
           {labelEl}
-          <input className="af-input" value={value || ''} onChange={(e) => onChange(e.target.value)} />
+          <input
+            className="af-input"
+            value={value || ''}
+            placeholder={field.placeholder}
+            required={field.required}
+            onChange={(e) => onChange(e.target.value)}
+          />
         </div>
       );
   }
@@ -285,4 +327,32 @@ export function SectionForm({ meta, value, onChange }) {
     return <StringsEditor value={value} onChange={onChange} addLabel={meta.addLabel} />;
   }
   return <Fields fields={meta.schema} value={value} onChange={onChange} />;
+}
+
+// Client-side guard so a half-filled record can't be published by accident.
+export function validateSection(meta, data) {
+  const errors = [];
+  const check = (fields, obj, prefix = '') => {
+    fields.forEach((field) => {
+      const label = prefix ? `${prefix} → ${field.label}` : field.label;
+      const value = obj ? obj[field.key] : undefined;
+      if (
+        field.required &&
+        (value === undefined || value === null || value === '' ||
+          (Array.isArray(value) && value.length === 0))
+      ) {
+        errors.push(`${label} is required.`);
+      }
+      if (field.type === 'list' && Array.isArray(value)) {
+        value.forEach((item, index) => check(field.fields, item, `${label} #${index + 1}`));
+      }
+      if (field.type === 'object') check(field.fields, value, label);
+    });
+  };
+
+  if (meta?.type === 'object') check(meta.schema, data);
+  if (meta?.type === 'records' && Array.isArray(data)) {
+    data.forEach((item, index) => check(meta.fields, item, `${meta.title} #${index + 1}`));
+  }
+  return errors;
 }

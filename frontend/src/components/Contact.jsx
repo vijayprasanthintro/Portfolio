@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Mail, Github, Linkedin, Phone, Send, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Mail, Github, Linkedin, Phone, Send, CheckCircle2, AlertCircle, Instagram } from 'lucide-react';
 import { profile as defaultProfile, socials as defaultSocials, api } from '../config';
 import { SectionHeading } from './SectionHeading';
 import { Reveal } from './Reveal';
@@ -121,6 +121,17 @@ export function Contact() {
                     </span>
                   </a>
                 </Magnetic>
+                {socials.instagram && (
+                  <Magnetic strength={8} max={5}>
+                    <a className="contact-link" href={socials.instagram} target="_blank" rel="noreferrer">
+                      <Instagram aria-hidden="true" />
+                      <span className="contact-link-text">
+                        <span className="contact-link-label">Instagram</span>
+                        <span className="contact-link-value">Open profile</span>
+                      </span>
+                    </a>
+                  </Magnetic>
+                )}
               </div>
             </div>
           </Reveal>

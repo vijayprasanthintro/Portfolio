@@ -1,6 +1,23 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Atom, Leaf, Server, Braces, ArrowRight, ArrowDown, Download } from 'lucide-react';
+import {
+  Atom,
+  Leaf,
+  Server,
+  Braces,
+  ArrowRight,
+  ArrowDown,
+  Download,
+  Instagram,
+  Share2,
+  Link2,
+  MessageCircle,
+  Linkedin,
+  Facebook,
+  X,
+  CheckCircle2,
+  AlertCircle,
+} from 'lucide-react';
 import { profile as defaultProfile, socials as defaultSocials } from '../config';
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
 import { useMobileDevice } from '../hooks/useMobileDevice';
@@ -43,6 +60,17 @@ function isTouchDevice() {
   );
 }
 
+const SHARE_URL = 'https://portfolio-self-36.vercel.app';
+const SHARE_TITLE = 'Vijayprasanth S – MERN Stack Developer';
+const SHARE_TEXT = 'Check out my portfolio and projects!';
+const SHARE_DATA = { title: SHARE_TITLE, text: SHARE_TEXT, url: SHARE_URL };
+
+const SHARE_LINKS = {
+  whatsapp: `https://wa.me/?text=${encodeURIComponent(`${SHARE_TEXT} ${SHARE_URL}`)}`,
+  linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(SHARE_URL)}`,
+  facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(SHARE_URL)}`,
+};
+
 export function Hero() {
   const reduced = usePrefersReducedMotion();
   const mobile = useMobileDevice();
@@ -52,6 +80,71 @@ export function Hero() {
   const { content } = useContent();
   const profile = content.profile || defaultProfile;
   const socials = content.socials || defaultSocials;
+
+  const [shareOpen, setShareOpen] = useState(false);
+  const [copyStatus, setCopyStatus] = useState('idle');
+  const shareButtonRef = useRef(null);
+  const shareCloseRef = useRef(null);
+  const shareInputRef = useRef(null);
+
+  const closeShare = useCallback(() => {
+    setShareOpen(false);
+    setCopyStatus('idle');
+    requestAnimationFrame(() => shareButtonRef.current?.focus());
+  }, []);
+
+  const openShare = useCallback(() => {
+    setCopyStatus('idle');
+    setShareOpen(true);
+  }, []);
+
+  const handleShare = async () => {
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      try {
+        await navigator.share(SHARE_DATA);
+        return;
+      } catch (err) {
+        // A user cancelling the native sheet is not an error.
+        if (err?.name === 'AbortError') return;
+        // Other failures fall through to the custom popup.
+      }
+    }
+    openShare();
+  };
+
+  const copyShareLink = async () => {
+    let copied = false;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(SHARE_URL);
+        copied = true;
+      }
+    } catch {
+      // Try the legacy selection fallback below.
+    }
+
+    if (!copied && shareInputRef.current) {
+      try {
+        shareInputRef.current.focus();
+        shareInputRef.current.select();
+        copied = document.execCommand('copy');
+      } catch {
+        copied = false;
+      }
+    }
+
+    setCopyStatus(copied ? 'success' : 'error');
+  };
+
+  useEffect(() => {
+    if (!shareOpen) return undefined;
+    shareCloseRef.current?.focus();
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') closeShare();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [shareOpen, closeShare]);
 
   useEffect(() => {
     if (reduced || isTouchDevice()) return;
@@ -136,7 +229,7 @@ export function Hero() {
                   width={148}
                   height={148}
                   loading="eager"
-                  fetchPriority="high"
+                  fetchpriority="high"
                   decoding="async"
                   onError={(e) => {
                     const wrap = e.currentTarget.closest('.hero-avatar-wrap');
@@ -191,6 +284,33 @@ export function Hero() {
                 </a>
               </Magnetic>
             )}
+            <Magnetic className="share-magnetic">
+              <button
+                ref={shareButtonRef}
+                type="button"
+                className="btn btn-ghost btn-share"
+                onClick={handleShare}
+                aria-haspopup="dialog"
+                aria-expanded={shareOpen}
+              >
+                Share Portfolio
+                <Share2 className="btn-icon" aria-hidden="true" />
+              </button>
+            </Magnetic>
+            {(Array.isArray(profile.heroButtons) ? profile.heroButtons : []).map((button, index) =>
+              button?.label && button?.href ? (
+                <Magnetic key={`${button.label}-${index}`}>
+                  <a
+                    href={button.href}
+                    className={`btn ${button.style === 'primary' ? 'btn-primary' : 'btn-ghost'}`}
+                    {...(/^https?:/i.test(button.href) ? { target: '_blank', rel: 'noreferrer' } : {})}
+                  >
+                    {button.label}
+                    <ArrowRight className="btn-icon" aria-hidden="true" />
+                  </a>
+                </Magnetic>
+              ) : null
+            )}
           </motion.div>
 
           <motion.div className="hero-socials" variants={fadeUp} initial={reduced ? 'show' : 'hidden'} animate="show" custom={6}>
@@ -216,6 +336,13 @@ export function Hero() {
                 </svg>
               </a>
             </Magnetic>
+            {socials.instagram && (
+              <Magnetic strength={9} max={5}>
+                <a className="social-link" href={socials.instagram} target="_blank" rel="noreferrer" aria-label="Instagram profile">
+                  <Instagram size={18} aria-hidden="true" />
+                </a>
+              </Magnetic>
+            )}
           </motion.div>
         </div>
 
@@ -271,6 +398,97 @@ export function Hero() {
             ))}
         </motion.div>
       </div>
+
+      {shareOpen && (
+        <div
+          className="share-overlay"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) closeShare();
+          }}
+        >
+          <div
+            className="share-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="share-dialog-title"
+            aria-describedby="share-dialog-desc"
+          >
+            <button
+              ref={shareCloseRef}
+              type="button"
+              className="share-close"
+              onClick={closeShare}
+              aria-label="Close share options"
+            >
+              <X size={18} aria-hidden="true" />
+            </button>
+
+            <span className="share-dialog-icon" aria-hidden="true">
+              <Share2 size={22} />
+            </span>
+            <h3 id="share-dialog-title">Share this portfolio</h3>
+            <p id="share-dialog-desc">Choose how you’d like to share Vijayprasanth’s work.</p>
+
+            <div className="share-link-row">
+              <input
+                ref={shareInputRef}
+                type="text"
+                readOnly
+                value={SHARE_URL}
+                aria-label="Portfolio URL"
+                onFocus={(event) => event.target.select()}
+              />
+              <button type="button" className="share-copy" onClick={copyShareLink}>
+                <Link2 size={16} aria-hidden="true" />
+                Copy Link
+              </button>
+            </div>
+
+            {copyStatus !== 'idle' && (
+              <p className={`share-status ${copyStatus}`} role="status">
+                {copyStatus === 'success' ? (
+                  <CheckCircle2 size={16} aria-hidden="true" />
+                ) : (
+                  <AlertCircle size={16} aria-hidden="true" />
+                )}
+                {copyStatus === 'success'
+                  ? 'Link copied successfully!'
+                  : 'Couldn’t copy automatically. Please copy the URL above.'}
+              </p>
+            )}
+
+            <div className="share-options">
+              <a
+                className="share-option share-whatsapp"
+                href={SHARE_LINKS.whatsapp}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <MessageCircle size={19} aria-hidden="true" />
+                WhatsApp
+              </a>
+              <a
+                className="share-option share-linkedin"
+                href={SHARE_LINKS.linkedin}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Linkedin size={19} aria-hidden="true" />
+                LinkedIn
+              </a>
+              <a
+                className="share-option share-facebook"
+                href={SHARE_LINKS.facebook}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Facebook size={19} aria-hidden="true" />
+                Facebook
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

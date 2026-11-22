@@ -95,7 +95,7 @@ export async function getContactMessages(req, res) {
   }
   try {
     const messages = await ContactMessage.find()
-      .select('name email message createdAt')
+      .select('name email message read createdAt')
       .sort({ createdAt: -1 })
       .limit(100)
       .lean();
@@ -103,6 +103,26 @@ export async function getContactMessages(req, res) {
   } catch (error) {
     console.error('[contact] Failed to list messages:', error.message);
     res.status(500).json({ success: false, message: 'Failed to load messages.' });
+  }
+}
+
+export async function toggleContactRead(req, res) {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({ success: false, message: 'MongoDB is not connected.' });
+  }
+  try {
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ success: false, message: 'Invalid message id.' });
+    }
+    const message = await ContactMessage.findById(id);
+    if (!message) return res.status(404).json({ success: false, message: 'Message not found.' });
+    message.read = typeof req.body?.read === 'boolean' ? req.body.read : !message.read;
+    await message.save();
+    return res.json({ success: true, data: { _id: message._id, read: message.read } });
+  } catch (error) {
+    console.error('[contact] Failed to update read state:', error.message);
+    return res.status(500).json({ success: false, message: 'Failed to update message.' });
   }
 }
 

@@ -77,7 +77,8 @@ export function Projects() {
   const [selected, setSelected] = useState(null);
   const [imageFor, setImageFor] = useState(null);
   const { content } = useContent();
-  const projects = content.projects || defaultProjects;
+  const saved = Array.isArray(content.projects) && content.projects.length ? content.projects : defaultProjects;
+  const projects = [...saved].sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
 
   const { featured, rest } = useMemo(
     () => ({

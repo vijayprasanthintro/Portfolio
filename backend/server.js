@@ -7,6 +7,8 @@ import { connectDB } from './config/db.js';
 import contactRoutes from './routes/contactRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import contentRoutes from './routes/contentRoutes.js';
+import publicAssetRoutes from './routes/publicAssetRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 import { seedAdmin } from './controllers/authController.js';
 
@@ -28,7 +30,9 @@ app.get('/api/health', (req, res) => {
 
 app.use('/api/contact', contactRoutes);
 app.use('/api/admin', authRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/content', contentRoutes);
+app.use('/api/assets', publicAssetRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

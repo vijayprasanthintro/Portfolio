@@ -8,11 +8,27 @@ import {
   Lightbulb,
   TriangleAlert,
   Rocket,
+  Image as ImageIcon,
+  Lightbulb as Insight,
+  Target,
+  Route as PathIcon,
 } from 'lucide-react';
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { Magnetic } from './Magnetic';
 import { ProjectImage } from './ProjectImage';
+
+const list = (value) => (Array.isArray(value) ? value : []);
+
+function StoryBlock({ icon: Icon, title, text }) {
+  if (!text) return null;
+  return (
+    <div className="modal-block project-story-block">
+      <h4><Icon size={17} aria-hidden="true" /> {title}</h4>
+      <p className="modal-desc">{text}</p>
+    </div>
+  );
+}
 
 export function ProjectModal({ project, onClose }) {
   const reduced = usePrefersReducedMotion();
@@ -65,7 +81,7 @@ export function ProjectModal({ project, onClose }) {
               <div className="modal-block">
                 <h4>Technologies</h4>
                 <div className="project-stack">
-                  {project.stack.map((tech) => (
+                  {list(project.stack).map((tech) => (
                     <span className="chip" key={tech}>
                       <span className="chip-dot" aria-hidden="true" />
                       {tech}
@@ -78,12 +94,33 @@ export function ProjectModal({ project, onClose }) {
                 <ProjectImage project={project} width={960} height={540} />
               </div>
 
+              {(project.problem || project.approach || project.outcome) && (
+                <div className="project-story-grid">
+                  <StoryBlock icon={Target} title="Problem" text={project.problem} />
+                  <StoryBlock icon={PathIcon} title="Approach" text={project.approach} />
+                  <StoryBlock icon={Insight} title="Outcome" text={project.outcome} />
+                </div>
+              )}
+
+              {list(project.screenshots).length > 0 && (
+                <div className="modal-block">
+                  <h4><ImageIcon size={17} aria-hidden="true" /> Screenshots</h4>
+                  <div className="project-screenshots">
+                    {list(project.screenshots).map((src, index) => (
+                      <a href={src} target="_blank" rel="noreferrer" key={`${src}-${index}`}>
+                        <img src={src} alt={`${project.name} screenshot ${index + 1}`} loading="lazy" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="modal-block">
                 <h4>
                   <CheckCircle2 size={17} aria-hidden="true" /> Key features
                 </h4>
                 <ul className="modal-list">
-                  {project.features.map((feature) => (
+                  {list(project.features).map((feature) => (
                     <li key={feature}>{feature}</li>
                   ))}
                 </ul>
@@ -94,7 +131,7 @@ export function ProjectModal({ project, onClose }) {
                   <TriangleAlert size={17} aria-hidden="true" /> Challenges I faced
                 </h4>
                 <ul className="modal-list">
-                  {project.challenges.map((challenge) => (
+                  {list(project.challenges).map((challenge) => (
                     <li key={challenge}>{challenge}</li>
                   ))}
                 </ul>
@@ -105,7 +142,7 @@ export function ProjectModal({ project, onClose }) {
                   <Lightbulb size={17} aria-hidden="true" /> What I learned
                 </h4>
                 <ul className="modal-list">
-                  {project.learned.map((item) => (
+                  {list(project.learned).map((item) => (
                     <li key={item}>{item}</li>
                   ))}
                 </ul>

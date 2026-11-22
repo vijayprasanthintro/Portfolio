@@ -4,280 +4,148 @@ import {
   ExternalLink,
   Save,
   RotateCcw,
-  CheckCircle2,
+  Menu,
+  X,
+  Moon,
+  Sun,
+  Search,
   AlertCircle,
-  KeyRound,
-  Check,
-  Inbox,
-  Trash2,
-  RefreshCw,
 } from 'lucide-react';
 import { LogoMark } from '../components/Logo';
 import { useContent, applyDesign } from '../content/ContentContext';
-import { sectionNav, sections, getSectionMeta } from './sections';
-import { SectionForm } from './FormBuilder';
+import { sectionNav, navGroups, sections, getSectionMeta } from './sections';
+import { SectionForm, validateSection } from './FormBuilder';
+import { Toast, ConfirmDialog } from './ui';
+import { Dashboard } from './Dashboard';
+import { ResumePage } from './ResumePage';
+import { MediaPage } from './MediaPage';
+import { InboxPage } from './InboxPage';
+import { SettingsPage } from './SettingsPage';
 import {
   adminToken,
   adminGetSection,
   adminSaveSection,
   adminResetSection,
-  adminChangePassword,
-  adminGetMessages,
-  adminDeleteMessage,
 } from '../content/api';
 
-function Toast({ toasts, remove }) {
-  if (!toasts.length) return null;
-  return (
-    <div className="admin-toasts" aria-live="polite">
-      {toasts.map((t) => (
-        <div key={t.id} className={`admin-toast ${t.kind}`} role="status">
-          {t.kind === 'error' ? <AlertCircle size={17} /> : <CheckCircle2 size={17} />}
-          <span>{t.message}</span>
-          <button type="button" className="admin-toast-close" onClick={() => remove(t.id)} aria-label="Dismiss">
-            ×
-          </button>
-        </div>
-      ))}
-    </div>
-  );
-}
+const CUSTOM_PAGES = ['resume', 'media', 'messages', 'settings'];
 
-function Dashboard({ onOpen, status }) {
-  const editable = sectionNav.filter((s) => sections[s.key] || s.key === 'account');
-  const coreCount = sectionNav.filter((s) => s.badge === 'core').length;
-  return (
-    <div className="admin-dashboard">
-      <div className="admin-stat-row">
-        <div className="admin-stat">
-          <span className="admin-stat-value">{editable.length - 1}</span>
-          <span className="admin-stat-label">Editable sections</span>
-        </div>
-        <div className="admin-stat">
-          <span className="admin-stat-value">{coreCount}</span>
-          <span className="admin-stat-label">Core content</span>
-        </div>
-        <div className="admin-stat">
-          <span className="admin-stat-value">{status === 'ready' ? '● Live' : status === 'error' ? '○ Offline' : '···'}</span>
-          <span className="admin-stat-label">Content API</span>
-        </div>
-      </div>
-
-      <div className="admin-grid">
-        {sectionNav
-          .filter((s) => s.key !== 'dashboard' && s.key !== 'account')
-          .map((s) => {
-            const Icon = s.icon;
-            return (
-              <button type="button" className="admin-tile" key={s.key} onClick={() => onOpen(s.key)}>
-                <span className="admin-tile-icon">
-                  <Icon size={22} aria-hidden="true" />
-                </span>
-                <span className="admin-tile-name">{s.label}</span>
-                <span className="admin-tile-desc">{s.desc}</span>
-                <span className="admin-tile-open">Edit →</span>
-              </button>
-            );
-          })}
-      </div>
-    </div>
-  );
-}
-
-function AccountPage({ toast }) {
-  const [current, setCurrent] = useState('');
-  const [next, setNext] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [done, setDone] = useState(false);
-
-  const submit = async (e) => {
-    e.preventDefault();
-    if (next.length < 8) {
-      toast('New password must be at least 8 characters.', 'error');
-      return;
-    }
-    setSaving(true);
-    try {
-      await adminChangePassword(current, next);
-      setCurrent('');
-      setNext('');
-      setDone(true);
-      toast('Password updated successfully.', 'success');
-    } catch (err) {
-      toast(err.message || 'Could not change password.', 'error');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="admin-account">
-      <div className="admin-panel">
-        <div className="admin-panel-head">
-          <span className="admin-panel-icon">
-            <KeyRound size={20} />
-          </span>
-          <div>
-            <h3>Change admin password</h3>
-            <p>Signed in as <strong>{adminToken.user() || 'admin'}</strong></p>
-          </div>
-        </div>
-        <form onSubmit={submit} noValidate>
-          <label className="af-label" htmlFor="ac-current">
-            Current password
-          </label>
-          <input
-            className="af-input"
-            id="ac-current"
-            type="password"
-            value={current}
-            onChange={(e) => setCurrent(e.target.value)}
-            autoComplete="current-password"
-          />
-          <label className="af-label" htmlFor="ac-next">
-            New password
-          </label>
-          <input
-            className="af-input"
-            id="ac-next"
-            type="password"
-            value={next}
-            onChange={(e) => setNext(e.target.value)}
-            autoComplete="new-password"
-          />
-          <button className="af-btn primary" type="submit" disabled={saving}>
-            {saving ? <span className="admin-spinner" /> : <Check size={16} />}
-            {done ? 'Password saved' : 'Update password'}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-function MessagesPage({ toast }) {
-  const [items, setItems] = useState(null);
-  const [deleting, setDeleting] = useState(null);
-
-  const load = useCallback(() => {
-    setItems(null);
-    adminGetMessages()
-      .then((res) => setItems(res.data || []))
-      .catch((err) => {
-        setItems([]);
-        toast(err.message || 'Could not load messages.', 'error');
-      });
-  }, [toast]);
-
-  useEffect(load, [load]);
-
-  const remove = async (id) => {
-    setDeleting(id);
-    try {
-      await adminDeleteMessage(id);
-      setItems((prev) => prev.filter((m) => m._id !== id));
-      toast('Message deleted.');
-    } catch (err) {
-      toast(err.message || 'Could not delete message.', 'error');
-    } finally {
-      setDeleting(null);
-    }
-  };
-
-  return (
-    <div className="admin-messages">
-      <div className="admin-panel">
-        <div className="admin-panel-head">
-          <span className="admin-panel-icon">
-            <Inbox size={20} />
-          </span>
-          <div>
-            <h3>Contact messages</h3>
-            <p>{items === null ? 'Loading…' : `${items.length} message${items.length === 1 ? '' : 's'}`}</p>
-          </div>
-          <button type="button" className="af-btn ghost" onClick={load} disabled={items === null}>
-            <RefreshCw size={15} />
-            Refresh
-          </button>
-        </div>
-        {items === null ? (
-          <div className="admin-loading">
-            <span className="admin-spinner" />
-            Loading messages…
-          </div>
-        ) : items.length === 0 ? (
-          <div className="admin-empty">
-            No messages yet. Submissions from the contact form will appear here.
-          </div>
-        ) : (
-          <div className="admin-msg-list">
-            {items.map((m) => (
-              <article className="admin-msg" key={m._id}>
-                <header className="admin-msg-head">
-                  <div className="admin-msg-who">
-                    <strong>{m.name}</strong>
-                    <a href={`mailto:${m.email}`}>{m.email}</a>
-                  </div>
-                  <span className="admin-msg-date">
-                    {new Date(m.createdAt).toLocaleString()}
-                  </span>
-                  <button
-                    type="button"
-                    className="af-btn danger-ghost"
-                    onClick={() => remove(m._id)}
-                    disabled={deleting === m._id}
-                    title="Delete message"
-                    aria-label={`Delete message from ${m.name}`}
-                  >
-                    {deleting === m._id ? <span className="admin-spinner" /> : <Trash2 size={15} />}
-                  </button>
-                </header>
-                <p className="admin-msg-body">{m.message}</p>
-              </article>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+function getTheme() {
+  try {
+    return window.localStorage.getItem('vp-admin-theme') === 'light' ? 'light' : 'dark';
+  } catch {
+    return 'dark';
+  }
 }
 
 export function AdminShell({ onLogout }) {
   const { content, status, refresh } = useContent();
   const [activeKey, setActiveKey] = useState(() => {
-    const m = window.location.hash.match(/^#\/admin\/([\w-]+)/);
-    return m && sectionNav.some((s) => s.key === m[1]) ? m[1] : 'dashboard';
+    const match = window.location.hash.match(/^#\/admin\/([\w-]+)/);
+    return match && sectionNav.some((s) => s.key === match[1]) ? match[1] : 'dashboard';
   });
-
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [theme, setThemeState] = useState(getTheme);
   const [draft, setDraft] = useState(null);
   const [ready, setReady] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [toasts, setToasts] = useState([]);
+  const [confirmNav, setConfirmNav] = useState(null);
   const toastId = useRef(0);
   const prevActive = useRef(activeKey);
 
   const meta = sections[activeKey];
   const navItem = getSectionMeta(activeKey);
+  const isCustom = CUSTOM_PAGES.includes(activeKey);
+
+  const setTheme = useCallback((value) => {
+    setThemeState(value);
+    try {
+      window.localStorage.setItem('vp-admin-theme', value);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-admin-theme', theme);
+  }, [theme]);
 
   const toast = useCallback((message, kind = 'success') => {
     const id = ++toastId.current;
     setToasts((t) => [...t, { id, message, kind }]);
-    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 4200);
+    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 4500);
   }, []);
+
   const removeToast = useCallback((id) => setToasts((t) => t.filter((x) => x.id !== id)), []);
 
-  const open = useCallback((key) => {
-    setActiveKey(key);
-    const hash = key === 'dashboard' ? '#/admin' : `#/admin/${key}`;
-    if (window.location.hash !== hash) window.location.hash = hash;
-  }, []);
+  const handleError = useCallback(
+    (err) => {
+      if (err?.status === 401) {
+        try {
+          sessionStorage.setItem('vp-admin-notice', 'Your session has expired — please sign in again.');
+        } catch {
+          /* ignore */
+        }
+        onLogout();
+        return;
+      }
+      toast(err?.message || 'Something went wrong.', 'error');
+    },
+    [onLogout, toast]
+  );
 
+  const navigate = useCallback(
+    (key) => {
+      setActiveKey(key);
+      setDrawerOpen(false);
+      const hash = key === 'dashboard' ? '#/admin' : `#/admin/${key}`;
+      if (window.location.hash !== hash) window.location.hash = hash;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+    []
+  );
+
+  const open = useCallback(
+    (key) => {
+      if (dirty && key !== activeKey) {
+        setConfirmNav(key);
+        return;
+      }
+      navigate(key);
+    },
+    [activeKey, dirty, navigate]
+  );
+
+  // Browser back/forward inside the hash route.
+  useEffect(() => {
+    const onHash = () => {
+      const match = window.location.hash.match(/^#\/admin\/([\w-]+)/);
+      const key = match && sectionNav.some((s) => s.key === match[1]) ? match[1] : 'dashboard';
+      setActiveKey((current) => (dirty && current !== key ? current : key));
+    };
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, [dirty]);
+
+  // Warn about unsaved changes when leaving the page entirely.
+  useEffect(() => {
+    if (!dirty) return undefined;
+    const warn = (e) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [dirty]);
+
+  // Load a section only when its editor is open.
   useEffect(() => {
     if (!meta) {
       setReady(true);
       setDraft(null);
-      return;
+      return undefined;
     }
     let cancelled = false;
     setReady(false);
@@ -293,12 +161,7 @@ export function AdminShell({ onLogout }) {
       .catch((err) => {
         if (cancelled) return;
         if (err.status === 401) {
-          try {
-            sessionStorage.setItem('vp-admin-notice', 'Your session has expired — please sign in again.');
-          } catch {
-            /* ignore */
-          }
-          onLogout();
+          handleError(err);
           return;
         }
         setDraft(null);
@@ -308,10 +171,9 @@ export function AdminShell({ onLogout }) {
     return () => {
       cancelled = true;
     };
-  }, [activeKey, meta, onLogout]);
+  }, [activeKey, meta, handleError, toast]);
 
-  // Live preview for the design section while editing; restore the saved
-  // design (or token defaults) when leaving the design editor.
+  // Live design preview while editing design tokens.
   useEffect(() => {
     if (activeKey === 'design') {
       if (draft) applyDesign(draft);
@@ -323,6 +185,11 @@ export function AdminShell({ onLogout }) {
   }, [activeKey, draft, content.design]);
 
   const onSave = async () => {
+    const errors = validateSection(meta, draft);
+    if (errors.length) {
+      toast(errors[0], 'error');
+      return;
+    }
     setSaving(true);
     try {
       await adminSaveSection(activeKey, draft);
@@ -330,7 +197,7 @@ export function AdminShell({ onLogout }) {
       toast('Section published — the site updates instantly.');
       refresh();
     } catch (err) {
-      toast(err.message || 'Save failed.', 'error');
+      handleError(err);
     } finally {
       setSaving(false);
     }
@@ -341,122 +208,203 @@ export function AdminShell({ onLogout }) {
       const res = await adminResetSection(activeKey);
       setDraft(res.data || null);
       setDirty(true);
-      toast('Section reset to defaults — press Save to publish.');
+      toast('Section reset to defaults — press Publish to save.');
     } catch (err) {
-      toast(err.message || 'Reset failed.', 'error');
+      handleError(err);
     }
   };
 
-  return (
-    <div className="admin-shell">
-      <aside className="admin-sidebar">
-        <div className="admin-sidebar-brand">
-          <LogoMark size={34} />
-          <div>
-            <strong>Portfolio CMS</strong>
-            <span>Content control</span>
-          </div>
-        </div>
+  const renderContent = () => {
+    if (activeKey === 'dashboard') return <Dashboard onOpen={open} toast={toast} />;
+    if (activeKey === 'resume') return <ResumePage toast={toast} onError={handleError} onOpen={open} />;
+    if (activeKey === 'media') return <MediaPage toast={toast} onError={handleError} />;
+    if (activeKey === 'messages') {
+      return (
+        <InboxPage toast={toast} onError={handleError} />
+      );
+    }
+    if (activeKey === 'settings' || activeKey === 'account') {
+      return (
+        <SettingsPage
+          toast={toast}
+          theme={theme}
+          setTheme={setTheme}
+          onLogout={onLogout}
+          onOpen={open}
+        />
+      );
+    }
 
-        <nav className="admin-nav" aria-label="Admin sections">
-          {sectionNav.map((s) => {
-            const Icon = s.icon;
-            return (
+    if (meta) {
+      return (
+        <div className="ad-editor">
+          <section className="ad-card ad-editor-card">
+            {!ready ? (
+              <div className="ad-loading"><span className="admin-spinner" /> Loading section…</div>
+            ) : (
+              <SectionForm
+                meta={meta}
+                value={draft}
+                onChange={(value) => {
+                  setDraft(value);
+                  setDirty(true);
+                }}
+              />
+            )}
+          </section>
+
+          <div className="ad-editor-actions">
+            <div className="ad-editor-actions-inner">
+              {dirty && <span className="ad-unsaved"><AlertCircle size={15} /> Unsaved changes</span>}
+              <button type="button" className="af-btn ghost" onClick={onReset} disabled={saving || !ready}>
+                <RotateCcw size={16} />
+                Reset
+              </button>
               <button
                 type="button"
-                key={s.key}
-                className={`admin-nav-item${activeKey === s.key ? ' active' : ''}`}
-                onClick={() => open(s.key)}
+                className={`af-btn primary${dirty ? ' pulsing' : ''}`}
+                onClick={onSave}
+                disabled={saving || !ready}
               >
-                <Icon size={17} aria-hidden="true" />
-                <span>{s.label}</span>
-                {s.badge && <em className={`admin-badge ${s.badge}`}>{s.badge}</em>}
+                {saving ? <span className="admin-spinner" /> : <Save size={16} />}
+                {saving ? 'Publishing…' : dirty ? 'Publish changes' : 'Save'}
               </button>
-            );
-          })}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  return (
+    <div className="ad-shell">
+      {drawerOpen && (
+        <button
+          type="button"
+          className="ad-drawer-backdrop"
+          onClick={() => setDrawerOpen(false)}
+          aria-label="Close navigation"
+        />
+      )}
+
+      <aside className={`ad-sidebar${drawerOpen ? ' open' : ''}`}>
+        <div className="ad-sidebar-brand">
+          <LogoMark size={34} />
+          <div>
+            <strong>Portfolio Studio</strong>
+            <span>Vijayprasanth CMS</span>
+          </div>
+          <button type="button" className="ad-icon-btn ad-drawer-close" onClick={() => setDrawerOpen(false)} aria-label="Close menu">
+            <X size={20} />
+          </button>
+        </div>
+
+        <nav className="ad-nav" aria-label="Admin sections">
+          {navGroups.map((group) => (
+            <div className="ad-nav-group" key={group.key}>
+              <span className="ad-nav-group-label">{group.label}</span>
+              {sectionNav
+                .filter((item) => item.group === group.key)
+                .map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      type="button"
+                      key={item.key}
+                      className={`ad-nav-item${activeKey === item.key ? ' active' : ''}`}
+                      onClick={() => open(item.key)}
+                    >
+                      <Icon size={18} aria-hidden="true" />
+                      <span>{item.label}</span>
+                      {item.badge && <em className={`ad-badge ${item.badge}`}>{item.badge}</em>}
+                    </button>
+                  );
+                })}
+            </div>
+          ))}
         </nav>
 
-        <div className="admin-sidebar-foot">
-          <a className="admin-nav-item" href="#" title="Back to the site">
-            <ExternalLink size={16} />
-            <span>View site</span>
+        <div className="ad-sidebar-foot">
+          <a className="ad-nav-item" href="/" title="Back to the site">
+            <ExternalLink size={17} />
+            <span>View live site</span>
           </a>
-          <button type="button" className="admin-nav-item" onClick={onLogout}>
-            <LogOut size={16} />
+          <button type="button" className="ad-nav-item" onClick={onLogout}>
+            <LogOut size={17} />
             <span>Log out</span>
           </button>
         </div>
       </aside>
 
-      <div className="admin-main">
-        <header className="admin-topbar">
-          <div className="admin-topbar-title">
-            <h2>{activeKey === 'dashboard' ? 'Dashboard' : navItem ? navItem.label : 'Admin'}</h2>
-            <p>
-              {activeKey === 'dashboard'
-                ? 'Manage every part of your portfolio from one place.'
-                : meta
-                  ? meta.description
-                  : ''}
-            </p>
+      <div className="ad-main">
+        <header className="ad-topbar">
+          <div className="ad-topbar-leading">
+            <button
+              type="button"
+              className="ad-icon-btn ad-menu-btn"
+              onClick={() => setDrawerOpen(true)}
+              aria-label="Open navigation"
+            >
+              <Menu size={21} />
+            </button>
+            <div className="ad-topbar-title">
+              <h1>{activeKey === 'dashboard' ? 'Dashboard' : navItem?.label || 'Admin'}</h1>
+              <p>
+                {activeKey === 'dashboard'
+                  ? 'Manage every part of your portfolio from one place.'
+                  : meta?.description || navItem?.desc || ''}
+              </p>
+            </div>
           </div>
-          <div className="admin-topbar-actions">
-            <span className="admin-topbar-user">{adminToken.user() || 'admin'}</span>
-            <a className="af-btn ghost" href="#">
+
+          <div className="ad-topbar-actions">
+            <label className="ad-search-top" title="Find a section">
+              <Search size={16} aria-hidden="true" />
+              <select
+                value={activeKey}
+                onChange={(e) => open(e.target.value)}
+                aria-label="Go to section"
+              >
+                {sectionNav.map((item) => (
+                  <option key={item.key} value={item.key}>{item.label}</option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              className="ad-icon-btn"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+            >
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+            <a className="af-btn ghost topbar-site" href="/" target="_blank" rel="noreferrer">
               <ExternalLink size={15} />
-              Open site
+              Live site
             </a>
+            <span className="ad-topbar-user">{adminToken.user() || 'admin'}</span>
           </div>
         </header>
 
-        <main className="admin-content">
-          {activeKey === 'dashboard' && <Dashboard onOpen={open} status={status} />}
-
-          {activeKey === 'account' && <AccountPage toast={toast} />}
-
-          {activeKey === 'messages' && <MessagesPage toast={toast} />}
-
-          {meta && (
-            <div className="admin-editor">
-              <div className="admin-panel">
-                {!ready ? (
-                  <div className="admin-loading">
-                    <span className="admin-spinner" />
-                    Loading section…
-                  </div>
-                ) : (
-                  <SectionForm
-                    meta={meta}
-                    value={draft}
-                    onChange={(v) => {
-                      setDraft(v);
-                      setDirty(true);
-                    }}
-                  />
-                )}
-              </div>
-
-              <div className="admin-sticky-actions">
-                <div className="admin-actions-inner">
-                  <button type="button" className="af-btn ghost" onClick={onReset} disabled={saving}>
-                    <RotateCcw size={16} />
-                    Reset to defaults
-                  </button>
-                  <button
-                    type="button"
-                    className={`af-btn primary${dirty ? ' pulsing' : ''}`}
-                    onClick={onSave}
-                    disabled={saving || !ready}
-                  >
-                    {saving ? <span className="admin-spinner" /> : <Save size={16} />}
-                    {saving ? 'Publishing…' : dirty ? 'Publish changes' : 'Save'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </main>
+        <main className="ad-content">{renderContent()}</main>
       </div>
+
+      {confirmNav && (
+        <ConfirmDialog
+          title="Leave without saving?"
+          message="You have unsaved changes in this section. They will be lost if you switch pages."
+          confirmLabel="Discard changes"
+          onCancel={() => setConfirmNav(null)}
+          onConfirm={() => {
+            setDirty(false);
+            navigate(confirmNav);
+            setConfirmNav(null);
+          }}
+        />
+      )}
 
       <Toast toasts={toasts} remove={removeToast} />
     </div>

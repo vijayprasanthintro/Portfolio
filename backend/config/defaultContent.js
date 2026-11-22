@@ -19,6 +19,9 @@ export const defaultContent = {
     availability: 'Open to internships and opportunities',
     image: '',
     resume: '/Vijayprasanth-Resume.pdf',
+    // Optional extra hero buttons. When empty the public site shows its
+    // existing Projects / Contact / Resume buttons.
+    heroButtons: [],
     education: {
       degree: 'Bachelor of Computer Applications (BCA)',
       short: 'BCA',
@@ -345,5 +348,36 @@ export const defaultContent = {
     radius: 16,
   },
 };
+
+// Dedicated management sections. Their defaults mirror the real data already
+// stored in `profile`, so enabling these editors never invents content.
+defaultContent.experience = [
+  {
+    id: 'internship',
+    role: defaultContent.profile.internship.role,
+    company: defaultContent.profile.internship.company,
+    period: defaultContent.profile.internship.period,
+    duration: defaultContent.profile.internship.duration,
+    description: '',
+    points: [...defaultContent.profile.internship.points],
+    tags: [...defaultContent.profile.internship.tags],
+  },
+];
+
+defaultContent.education = [
+  {
+    id: 'bca',
+    degree: defaultContent.profile.education.degree,
+    department: '',
+    institution: defaultContent.profile.education.institution,
+    location: defaultContent.profile.education.location,
+    years: defaultContent.profile.education.years,
+    status: defaultContent.profile.education.status,
+    cgpa: defaultContent.profile.education.cgpa,
+    description: '',
+  },
+];
+
+defaultContent.certificates = [];
 
 export const sectionKeys = Object.keys(defaultContent);

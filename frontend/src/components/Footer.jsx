@@ -1,3 +1,4 @@
+import { Instagram } from 'lucide-react';
 import { navLinks as defaultNav, socials as defaultSocials, profile as defaultProfile } from '../config';
 import { LogoMark } from './Logo';
 import { useContent } from '../content/ContentContext';
@@ -54,6 +55,11 @@ export function Footer() {
                 <path d="m22 7-10 6L2 7" />
               </svg>
             </a>
+            {socials.instagram && (
+              <a className="social-link" href={socials.instagram} target="_blank" rel="noreferrer" aria-label="Instagram">
+                <Instagram size={18} aria-hidden="true" />
+              </a>
+            )}
           </div>
         </div>
 

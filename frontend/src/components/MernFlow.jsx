@@ -40,7 +40,8 @@ const defaultLayers = [
 export function MernFlow() {
   const reduced = usePrefersReducedMotion();
   const { content } = useContent();
-  const layers = content.mern || defaultLayers;
+  const saved = Array.isArray(content.mern) && content.mern.length ? content.mern : defaultLayers;
+  const layers = [...saved].sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
 
   return (
     <section id="stack" aria-label="MERN stack architecture">
@@ -56,7 +57,10 @@ export function MernFlow() {
           <div className="mern-flow">
             <div className="mern-layer-row">
               {layers.map((layer, i) => {
-                const Icon = layer.icon || mernIcon(layer.id);
+                const Icon =
+                  typeof layer.icon === 'string'
+                    ? mernIcon(layer.icon || layer.id)
+                    : layer.icon || mernIcon(layer.id);
                 return (
                 <div className="mern-node-wrap" key={layer.id || layer.name}>
                   <motion.div

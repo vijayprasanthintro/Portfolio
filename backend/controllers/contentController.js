@@ -12,7 +12,7 @@ const SEGMENT_RE = /^[\w-]+$/;
 // Public responses are cached in memory so repeated visits don't hit MongoDB.
 let publicCache = null;
 
-function invalidateCache() {
+export function invalidateCache() {
   publicCache = null;
 }
 
@@ -171,9 +171,22 @@ export async function saveSection(req, res) {
   }
 
   try {
+    // Object editors only render their declared fields. Keep any extra
+    // server-managed keys (e.g. profile.resumeMeta) so a normal Hero save
+    // cannot silently detach the uploaded resume file.
+    const nextData = { ...data };
+    if (defaultContent[section] && !Array.isArray(defaultContent[section])) {
+      const existing = await Content.findOne({ section }).select('data').lean();
+      if (existing?.data && typeof existing.data === 'object') {
+        for (const [key, value] of Object.entries(existing.data)) {
+          if (!(key in nextData)) nextData[key] = value;
+        }
+      }
+    }
+
     const doc = await Content.findOneAndUpdate(
       { section },
-      { section, data, updatedBy: req.adminName || 'admin' },
+      { section, data: nextData, updatedBy: req.adminName || 'admin' },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     ).lean();
     invalidateCache();

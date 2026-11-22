@@ -30,7 +30,8 @@ const defaultBuilds = [
 
 export function BuildSection() {
   const { content } = useContent();
-  const builds = content.build || defaultBuilds;
+  const saved = Array.isArray(content.build) && content.build.length ? content.build : defaultBuilds;
+  const builds = [...saved].sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
 
   return (
     <section id="build" aria-label="What I can build">

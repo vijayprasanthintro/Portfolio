@@ -4,6 +4,7 @@ import { protect } from '../middleware/auth.js';
 import {
   createContactMessage,
   getContactMessages,
+  toggleContactRead,
   deleteContactMessage,
 } from '../controllers/contactController.js';
 
@@ -19,6 +20,7 @@ const contactLimiter = rateLimit({
 
 router.post('/', contactLimiter, createContactMessage);
 router.get('/', protect, getContactMessages);
+router.patch('/:id/read', protect, toggleContactRead);
 router.delete('/:id', protect, deleteContactMessage);
 
 export default router;

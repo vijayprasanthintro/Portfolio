@@ -1,0 +1,436 @@
+/* Styles for optional CMS-managed content that extends the original layout. */
+
+.education-list {
+  display: grid;
+  gap: 22px;
+}
+
+.edu-department {
+  margin: 0 0 4px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--accent-3);
+}
+
+.certificates-block {
+  margin-top: 56px;
+}
+
+.certificates-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.certificates-heading > svg {
+  color: var(--accent-2);
+  flex-shrink: 0;
+}
+
+.certificates-heading h3 {
+  font-size: 1.28rem;
+}
+
+.certificates-heading p {
+  color: var(--text-2);
+  font-size: 0.9rem;
+}
+
+.certificates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.certificate-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  padding: 20px;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.25s var(--ease-out), transform 0.25s var(--ease-out);
+}
+
+.certificate-card.linked:hover {
+  border-color: var(--accent-2);
+  transform: translateY(-3px);
+}
+
+.certificate-icon,
+.certificate-image {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: var(--accent-1-soft);
+  border: 1px solid var(--border-strong);
+  color: var(--accent-2);
+}
+
+.certificate-image {
+  display: block;
+  object-fit: contain;
+  padding: 4px;
+  background: var(--bg-1);
+}
+
+.certificate-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.certificate-copy strong {
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.certificate-copy span,
+.certificate-copy small {
+  color: var(--text-2);
+  font-size: 0.84rem;
+}
+
+.certificate-copy p {
+  margin-top: 6px;
+  color: var(--text-2);
+  font-size: 0.86rem;
+}
+
+.certificate-link-icon {
+  color: var(--accent-2);
+  flex-shrink: 0;
+}
+
+.project-story-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.project-story-block {
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  margin: 0;
+}
+
+.project-story-block .modal-desc {
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.project-screenshots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.project-screenshots a {
+  display: block;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-1);
+  aspect-ratio: 16 / 10;
+}
+
+.project-screenshots img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .project-story-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .certificates-block {
+    margin-top: 44px;
+  }
+}
+
+@media (max-width: 430px) {
+  .certificate-card {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .certificate-icon,
+  .certificate-image {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* ---------- Share Portfolio (hero action + fallback popup) ---------- */
+
+/* Always place the new action on its own line directly after Download Resume,
+   while leaving the three original hero buttons in their existing layout. */
+.hero-actions .share-magnetic {
+  flex-basis: 100%;
+}
+
+.btn-share {
+  border-color: rgba(139, 92, 246, 0.5);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.14), rgba(139, 92, 246, 0.16)),
+    var(--surface-strong);
+}
+
+.btn-share .btn-icon {
+  color: #a78bfa;
+}
+
+.btn-share:hover {
+  border-color: rgba(167, 139, 250, 0.82);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.22), rgba(139, 92, 246, 0.24)),
+    var(--surface-hover);
+  box-shadow: 0 12px 32px rgba(79, 70, 229, 0.24);
+}
+
+.btn-share:hover .btn-icon {
+  transform: rotate(-12deg) scale(1.08);
+}
+
+:root[data-theme='light'] .btn-share .btn-icon {
+  color: #6d28d9;
+}
+
+.share-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: var(--modal-backdrop);
+}
+
+.share-dialog {
+  position: relative;
+  width: min(100%, 430px);
+  max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  padding: 28px;
+  border-radius: 24px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-2);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+
+.share-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: var(--text-2);
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  transition: color 0.2s var(--ease-out), border-color 0.2s var(--ease-out);
+}
+
+.share-close:hover {
+  color: var(--text-1);
+  border-color: rgba(139, 92, 246, 0.6);
+}
+
+.share-dialog-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 14px;
+  border-radius: 16px;
+  color: #a78bfa;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.16), rgba(139, 92, 246, 0.2));
+  border: 1px solid rgba(139, 92, 246, 0.35);
+}
+
+.share-dialog h3 {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--text-1);
+}
+
+.share-dialog > p {
+  margin: 0 0 20px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+.share-link-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  padding: 6px;
+  border-radius: 14px;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+}
+
+.share-link-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 0 10px;
+  border: 0;
+  outline: none;
+  color: var(--text-1);
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  text-overflow: ellipsis;
+}
+
+.share-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  flex-shrink: 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  color: #fff;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: transform 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out);
+}
+
+.share-copy:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
+}
+
+.share-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 14px 0 0;
+  font-size: 0.8rem;
+}
+
+.share-status.success {
+  color: var(--accent-3);
+}
+
+.share-status.error {
+  color: var(--danger);
+}
+
+.share-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.share-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 82px;
+  padding: 12px 6px;
+  border-radius: 14px;
+  color: var(--text-1);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.2s var(--ease-out), border-color 0.2s var(--ease-out),
+    background 0.2s var(--ease-out);
+}
+
+.share-option:hover {
+  transform: translateY(-2px);
+  background: var(--surface-hover);
+}
+
+.share-whatsapp svg {
+  color: #25d366;
+}
+
+.share-linkedin svg {
+  color: #60a5fa;
+}
+
+.share-facebook svg {
+  color: #82b1ff;
+}
+
+.share-whatsapp:hover {
+  border-color: rgba(37, 211, 102, 0.55);
+}
+
+.share-linkedin:hover {
+  border-color: rgba(59, 130, 246, 0.6);
+}
+
+.share-facebook:hover {
+  border-color: rgba(96, 165, 250, 0.6);
+}
+
+@media (max-width: 480px) {
+  .share-overlay {
+    align-items: end;
+    padding: 12px;
+  }
+
+  .share-dialog {
+    width: 100%;
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+    padding: 24px 18px 20px;
+    border-radius: 22px 22px 0 0;
+  }
+
+  .share-link-row {
+    flex-direction: column;
+    padding: 8px;
+  }
+
+  .share-link-row input {
+    min-height: 40px;
+    text-align: center;
+  }
+
+  .share-copy {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .share-options {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .share-option {
+    min-height: 76px;
+    font-size: 0.72rem;
+  }
+}

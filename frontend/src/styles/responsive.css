@@ -41,9 +41,14 @@
 /* Mobile */
 @media (max-width: 768px) {
   .hero {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 44px;
     padding-top: 20px;
+  }
+
+  .hero-content,
+  .hero-visual {
+    min-width: 0;
   }
 
   .hero-visual {
